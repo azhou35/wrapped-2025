@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2025 Social Calendar Wheel</title>
+  <style>
+    :root{
+      --sky: #A8D0E6;
+      --coral: #F76C6C;
+      --indigo: #374785;
+      --navy: #24305E;
+      --offwhite: #F1F1F3;
+      --slate-200: #A6B0C8;
+
+      --bg: var(--offwhite);
+      --ink: var(--navy);
+      --muted: color-mix(in oklab, var(--navy) 55%, var(--offwhite));
+      --card: #ffffff;
+      --border: color-mix(in oklab, var(--slate-200) 55%, #ffffff);
+      --shadow: 0 10px 30px rgba(36,48,94,.10);
+      --serif: ui-serif, Georgia, "Times New Roman", Times, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
+      --c-11: var(--sky);
+      --c-evt: var(--coral);
+      --c-cr: var(--navy);
+      --ring: color-mix(in oklab, var(--slate-200) 70%, #ffffff);
+    }
+    html,body{height:100%;}
+    body{margin:0;background:#fff8ef;color:var(--ink);font-family:var(--sans);}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;min-height:100vh;display:flex;align-items:center;}
+    header{display:none;}
+    h1{display:none;}
+    .sub{display:none;}
+    body{overflow:hidden;}
+    .layout{max-width:960px;margin:0 auto;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);}
+    .viz{padding:14px 14px 8px;min-height:640px;}
+    .side h2{margin:6px 0 4px;font-size:18px;letter-spacing:-0.01em;color:var(--navy);}
+    .side .meta{color:var(--muted);font-size:13px;margin-bottom:10px;}
+    .pillrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px;}
+    .pill{border:1px solid var(--border);background:#fff;padding:7px 10px;border-radius:999px;font-size:13px;color:var(--navy);}
+    .list{margin:0;padding-left:16px;color:var(--navy);font-size:14px;line-height:1.5;}
+    .list li{margin:6px 0;}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px 14px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;}
+    .legend-item{display:flex;align-items:center;gap:8px;}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;}
+    .tooltip{position:fixed;pointer-events:none;background:rgba(255,255,255,.96);border:1px solid var(--border);box-shadow:0 16px 30px rgba(36,48,94,.18);padding:10px 11px;border-radius:14px;font-size:13px;max-width:320px;opacity:0;transform: translateY(6px);transition: opacity .12s ease, transform .12s ease;}
+    .tooltip strong{font-weight:700;color:var(--navy);}
+    .monthLabel{fill:var(--muted);font-size:11px;letter-spacing:.16em;}
+    .anno{fill:var(--muted);font-size:12px;}
+    .seg{cursor:pointer;}
+    .error{color:#b91c1c;font-size:14px;padding:10px 14px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="layout">
+      <div class="card viz">
+        <div id="chart" class="viz"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tip" role="tooltip"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    try {
+      const ROTATE_SLOTS = 3;
+      const EVENTS = [{"date": "2025-01-11", "title": "Craft Sesh", "social_subtype": "Creative Hang", "month": 0}, {"date": "2025-01-12", "title": "LDF Hang", "social_subtype": "Event", "month": 0}, {"date": "2025-01-12", "title": "Brunch with Arvind Mary", "social_subtype": "1:1", "month": 0}, {"date": "2025-01-25", "title": "Kristie Hang", "social_subtype": "Event", "month": 0}, {"date": "2025-01-28", "title": "Board Game Night", "social_subtype": "Event", "month": 0}, {"date": "2025-01-30", "title": "Events races", "social_subtype": "Event", "month": 0}, {"date": "2025-01-31", "title": "Movie Club #1: Wong Kar Wai, Afters, Shots at McGee’s", "social_subtype": "Event", "month": 0}, {"date": "2025-02-08", "title": "Party", "social_subtype": "Event", "month": 1}, {"date": "2025-02-15", "title": "Brooklyn Hang", "social_subtype": "Event", "month": 1}, {"date": "2025-02-16", "title": "Brunch w Parents", "social_subtype": "1:1", "month": 1}, {"date": "2025-02-22", "title": "Coffee", "social_subtype": "Event", "month": 1}, {"date": "2025-02-22", "title": "Brunch w Stepho n Gang", "social_subtype": "1:1", "month": 1}, {"date": "2025-02-23", "title": "photo walk", "social_subtype": "Creative Hang", "month": 1}, {"date": "2025-02-25", "title": "Allen Emily Hang", "social_subtype": "Event", "month": 1}, {"date": "2025-02-27", "title": "boardgame?", "social_subtype": "Event", "month": 1}, {"date": "2025-03-01", "title": "Sister hang", "social_subtype": "Event", "month": 2}, {"date": "2025-03-05", "title": "TOKYO LISTENING ROOM JAZZ", "social_subtype": "Creative Hang", "month": 2}, {"date": "2025-03-12", "title": "Bahar Hang", "social_subtype": "Event", "month": 2}, {"date": "2025-03-13", "title": "All About Annie Dinner", "social_subtype": "Event", "month": 2}, {"date": "2025-03-14", "title": "Movie Club #2: Tampopo and Afters", "social_subtype": "Event", "month": 2}, {"date": "2025-03-18", "title": "Poetry event", "social_subtype": "Event", "month": 2}, {"date": "2025-03-22", "title": "Dinner w Jenny & Nitin", "social_subtype": "1:1", "month": 2}, {"date": "2025-03-25", "title": "Hang", "social_subtype": "Event", "month": 2}, {"date": "2025-03-26", "title": "Shirling & Steph Baking Hang", "social_subtype": "Event", "month": 2}, {"date": "2025-03-27", "title": "Hang w An at Corner Party", "social_subtype": "1:1", "month": 2}, {"date": "2025-03-29", "title": "Coffee with Nitin / Shrey", "social_subtype": "1:1", "month": 2}, {"date": "2025-04-02", "title": "Writing Club", "social_subtype": "Creative Hang", "month": 3}, {"date": "2025-04-05", "title": "Proposed Coffee w Adithi", "social_subtype": "1:1", "month": 3}, {"date": "2025-04-05", "title": "Dinner w Parents", "social_subtype": "1:1", "month": 3}, {"date": "2025-04-11", "title": "Nitin/Evan Hang", "social_subtype": "Event", "month": 3}, {"date": "2025-04-16", "title": "Writing Club", "social_subtype": "Creative Hang", "month": 3}, {"date": "2025-04-19", "title": "Easter Dinner / Scrap & Yap?", "social_subtype": "Event", "month": 3}, {"date": "2025-04-26", "title": "dinner w robin", "social_subtype": "1:1", "month": 3}, {"date": "2025-05-01", "title": "The Role of Craft in Building AI Products", "social_subtype": "Creative Hang", "month": 4}, {"date": "2025-05-02", "title": "Dinner w Nitin x Shrey x Charlotte", "social_subtype": "1:1", "month": 4}, {"date": "2025-05-02", "title": "charlotte shrey dinner", "social_subtype": "Event", "month": 4}, {"date": "2025-05-04", "title": "UES Party", "social_subtype": "Event", "month": 4}, {"date": "2025-05-04", "title": "Nitinnie dinner cook butter chicken", "social_subtype": "Event", "month": 4}, {"date": "2025-05-29", "title": "Coffee w Kristie", "social_subtype": "1:1", "month": 4}, {"date": "2025-06-02", "title": "Empire of AI Event", "social_subtype": "Event", "month": 5}, {"date": "2025-06-04", "title": "Ambrook Event", "social_subtype": "Event", "month": 5}, {"date": "2025-06-07", "title": "Dinner at Traif", "social_subtype": "Event", "month": 5}, {"date": "2025-06-13", "title": "movie at tribeca", "social_subtype": "Event", "month": 5}, {"date": "2025-06-14", "title": "Sammy Virji Concert", "social_subtype": "Event", "month": 5}, {"date": "2025-06-21", "title": "Coqodaq Brunch", "social_subtype": "Event", "month": 5}, {"date": "2025-06-21", "title": "queens night market", "social_subtype": "Event", "month": 5}, {"date": "2025-06-28", "title": "Photo Gallery", "social_subtype": "Creative Hang", "month": 5}, {"date": "2025-07-13", "title": "YANKEES GAME", "social_subtype": "Event", "month": 6}, {"date": "2025-07-14", "title": "CRAFTS NIGHT AND QUALITY TIME", "social_subtype": "Creative Hang", "month": 6}, {"date": "2025-07-25", "title": "Olga Coffee", "social_subtype": "Event", "month": 6}, {"date": "2025-07-25", "title": "Coffee with Elsie", "social_subtype": "1:1", "month": 6}, {"date": "2025-07-27", "title": "anbear relaxation dinner", "social_subtype": "Event", "month": 6}, {"date": "2025-07-27", "title": "anbear relaxation dinner", "social_subtype": "Event", "month": 6}, {"date": "2025-07-30", "title": "Writing Club", "social_subtype": "Creative Hang", "month": 6}, {"date": "2025-08-12", "title": "Coffee w Eric", "social_subtype": "1:1", "month": 7}, {"date": "2025-08-15", "title": "Event w SF girlies", "social_subtype": "Event", "month": 7}, {"date": "2025-08-15", "title": "Coffee w Eric", "social_subtype": "1:1", "month": 7}, {"date": "2025-08-15", "title": "Dinner w Nitin", "social_subtype": "1:1", "month": 7}, {"date": "2025-08-16", "title": "jesse hang", "social_subtype": "Event", "month": 7}, {"date": "2025-08-16", "title": "Coffee w Sophie", "social_subtype": "1:1", "month": 7}, {"date": "2025-08-20", "title": "movie w nitin", "social_subtype": "1:1", "month": 7}, {"date": "2025-08-27", "title": "Writing Club?", "social_subtype": "Creative Hang", "month": 7}, {"date": "2025-08-28", "title": "Stephanniekristie Hang", "social_subtype": "Event", "month": 7}, {"date": "2025-09-02", "title": "Writing Club?", "social_subtype": "Creative Hang", "month": 8}, {"date": "2025-09-06", "title": "Emily Party Yousuke PG", "social_subtype": "Event", "month": 8}, {"date": "2025-09-06", "title": "Emily Party Yousuke PG", "social_subtype": "Event", "month": 8}, {"date": "2025-09-12", "title": "dinner!", "social_subtype": "Event", "month": 8}, {"date": "2025-09-17", "title": "Writing Club", "social_subtype": "Creative Hang", "month": 8}, {"date": "2025-09-20", "title": "Allison Spa Hang", "social_subtype": "Event", "month": 8}, {"date": "2025-10-04", "title": "Nitin Party", "social_subtype": "Event", "month": 9}, {"date": "2025-10-04", "title": "Mid Autumn Festival Events", "social_subtype": "Event", "month": 9}, {"date": "2025-10-05", "title": "hangout w simon at land to sea", "social_subtype": "1:1", "month": 9}, {"date": "2025-10-07", "title": "Movie: Scarlet", "social_subtype": "Event", "month": 9}, {"date": "2025-10-14", "title": "coffee w connie ^-^", "social_subtype": "1:1", "month": 9}, {"date": "2025-10-22", "title": "Dinner w Jenny", "social_subtype": "1:1", "month": 9}, {"date": "2025-10-24", "title": "Dinner w Stepho/Jas", "social_subtype": "1:1", "month": 9}, {"date": "2025-11-01", "title": "Halloween Party", "social_subtype": "Event", "month": 10}, {"date": "2025-11-08", "title": "Women Who Lift: Lift & Brunch", "social_subtype": "Event", "month": 10}, {"date": "2025-11-09", "title": "coffee w jane", "social_subtype": "1:1", "month": 10}, {"date": "2025-11-11", "title": "Junk Journal", "social_subtype": "Creative Hang", "month": 10}, {"date": "2025-11-13", "title": "Factor Friendsgiving Potluck | Optional", "social_subtype": "Event", "month": 10}, {"date": "2025-11-15", "title": "Photowalk", "social_subtype": "Creative Hang", "month": 10}, {"date": "2025-11-16", "title": "coffee on sunday", "social_subtype": "Event", "month": 10}, {"date": "2025-11-22", "title": "Tamil Movie Night", "social_subtype": "Event", "month": 10}, {"date": "2025-12-04", "title": "Factor | Cohort 3 | Event", "social_subtype": "Event", "month": 11}, {"date": "2025-12-11", "title": "Holiday Party", "social_subtype": "Event", "month": 11}, {"date": "2025-12-12", "title": "Holiday Party", "social_subtype": "Event", "month": 11}, {"date": "2025-12-15", "title": "annie & kristie find time to hang out Dec 19-22", "social_subtype": "Event", "month": 11}, {"date": "2025-12-19", "title": "Junk Journal Workshop", "social_subtype": "Creative Hang", "month": 11}, {"date": "2025-12-21", "title": "scheduled hang w parents / sister at some point", "social_subtype": "1:1", "month": 11}, {"date": "2025-12-21", "title": "dook game", "social_subtype": "Event", "month": 11}];
+      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const subtypes = ["1:1","Event","Creative Hang"];
+      const colors = {
+        "1:1": getComputedStyle(document.documentElement).getPropertyValue("--c-11").trim(),
+        "Event": getComputedStyle(document.documentElement).getPropertyValue("--c-evt").trim(),
+        "Creative Hang": getComputedStyle(document.documentElement).getPropertyValue("--c-cr").trim(),
+      };
+      const tip = d3.select("#tip");
+
+      const stats = Array.from({length:12}, (_,m) => ({
+        month:m,
+        counts: Object.fromEntries(subtypes.map(s => [s,0])),
+        titles: Object.fromEntries(subtypes.map(s => [s,[]])),
+        total:0
+      }));
+
+      for (const e of EVENTS) {
+        const m = e.month;
+        const s = e.social_subtype || "Event";
+        const cell = stats[m];
+        if (!(s in cell.counts)) continue;
+        cell.counts[s] += 1;
+        cell.titles[s].push({date: e.date, title: e.title});
+        cell.total += 1;
+      }
+
+      const maxTotal = Math.max(1, ...stats.map(d=>d.total));
+
+      const panelTitle = document.getElementById("panelTitle");
+      const panelMeta = document.getElementById("panelMeta");
+      const panelPills = document.getElementById("panelPills");
+      const panelList = document.getElementById("panelList");
+
+      function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[s]));
+      }
+
+      function updatePanel(cell){
+        if (!panelTitle || !panelMeta || !panelPills || !panelList) return;
+        panelTitle.textContent = `${monthNames[cell.month]} 2025`;
+        panelMeta.textContent = `Total social moments: ${cell.total}`;
+        panelPills.innerHTML = "";
+        for (const s of subtypes) {
+          const span = document.createElement("span");
+          span.className = "pill";
+          span.textContent = `${s}: ${cell.counts[s]}`;
+          panelPills.appendChild(span);
+        }
+        panelList.innerHTML = "";
+        const allItems = [];
+        for (const s of subtypes) for (const it of cell.titles[s]) allItems.push({...it, subtype:s});
+        allItems.sort((a,b) => a.date.localeCompare(b.date));
+        for (const it of allItems) {
+          const li = document.createElement("li");
+          li.innerHTML = `<span class="muted">${it.date}</span> — ${escapeHtml(it.title)} <span class="muted">(${it.subtype})</span>`;
+          panelList.appendChild(li);
+        }
+        if (allItems.length === 0) {
+          const li = document.createElement("li");
+          li.innerHTML = `<span class="muted">No social moments this month.</span>`;
+          panelList.appendChild(li);
+        }
+      }
+
+      const chartEl = document.getElementById("chart");
+      const width = Math.min(820, chartEl.clientWidth || 820);
+      const height = 700;
+
+      const svg = d3.select("#chart").append("svg").attr("width","100%").attr("viewBox", `0 0 ${width} ${height}`);
+      const cx = width/2, cy = height/2;
+      const g = svg.append("g").attr("transform", `translate(${cx},${cy})`);
+
+      const rBase = Math.min(width, height) * 0.24;
+      const rMaxExtra = Math.min(width, height) * 0.20;
+      const gap = 0.012;
+
+      g.append("circle").attr("r", rBase + rMaxExtra + 36).attr("fill","none").attr("stroke","var(--ring)").attr("stroke-width",1.0).attr("opacity",0.65);
+
+      const monthSpan = 2*Math.PI/12;
+      const arc = d3.arc();
+
+      // Build segments in SLOT space, but keep the month id on each seg.
+      const segs = [];
+      for (let s=0; s<12; s++) {
+        const m = (s - ROTATE_SLOTS + 12) % 12;
+        const cell = stats[m];
+        const startAngle = (-Math.PI/2) + s*monthSpan + gap/2;
+        const endAngle = startAngle + monthSpan - gap;
+        segs.push({...cell, slot:s, startAngle, endAngle});
+      }
+
+      const thickness = (d) => (d.total<=0) ? 10 : (10 + (d.total/maxTotal) * rMaxExtra);
+      const segGroup = g.append("g");
+
+      segGroup.selectAll("path.back")
+        .data(segs)
+        .enter().append("path")
+        .attr("d", d => arc({
+          innerRadius: rBase,
+          outerRadius: rBase + rMaxExtra + 18,
+          startAngle: d.startAngle,
+          endAngle: d.endAngle
+        }))
+        .attr("fill","#fff")
+        .attr("opacity",0.92)
+        .attr("stroke","var(--border)")
+        .attr("stroke-width",1.0);
+
+      // Fixed calendar labels (like v12): Jan at 12 o’clock, then Feb…Dec clockwise. Keep text upright.
+      const labelR = rBase + rMaxExtra + 60;
+      for (let m=0; m<12; m++) {
+        const start = (-Math.PI/2) + m*monthSpan;
+        const mid = start + monthSpan/2;
+        const x = Math.cos(mid)*labelR;
+        const y = Math.sin(mid)*labelR;
+
+        // Rotate tangentially but keep upright
+        let deg = (mid * 180 / Math.PI) + 90;
+        if (deg > 90 && deg < 270) deg = (deg + 180) % 360;
+
+        g.append("text")
+          .attr("class","monthLabel")
+          .attr("text-anchor","middle")
+          .attr("dominant-baseline","middle")
+          .attr("transform", `translate(${x},${y}) rotate(${deg})`)
+          .text(monthNames[m]);
+      }
+
+      // Stacked radial bands
+      const order = ["1:1","Event","Creative Hang"];
+      const stackData = [];
+      for (const seg of segs) {
+        const t = thickness(seg);
+        let r0 = rBase;
+        const total = Math.max(1, seg.total);
+        for (const sType of order) {
+          const frac = seg.counts[sType]/total;
+          const r1 = r0 + frac*t;
+          stackData.push({
+            month: seg.month,
+            subtype: sType,
+            count: seg.counts[sType],
+            total: seg.total,
+            startAngle: seg.startAngle,
+            endAngle: seg.endAngle,
+            innerRadius: r0,
+            outerRadius: r1
+          });
+          r0 = r1;
+        }
+      }
+
+      segGroup.selectAll("path.seg")
+        .data(stackData)
+        .enter().append("path")
+        .attr("class","seg")
+        .attr("d", d => arc(d))
+        .attr("fill", d => colors[d.subtype] || "#64748b")
+        .attr("opacity", d => d.count===0 ? 0.08 : 0.90)
+        .on("mousemove", (event, d) => {
+          tip.style("opacity",1).style("transform","translateY(0px)");
+          const label = `${monthNames[d.month]} 2025`;
+          const share = d.total ? Math.round((d.count/d.total)*100) : 0;
+          tip.html(`<strong>${label}</strong>
+                    <div class="muted">${d.subtype}: ${d.count} (${share}%)</div>
+                    <div class="muted">Total: ${d.total}</div>`);
+          tip.style("left",(event.clientX+12)+"px").style("top",(event.clientY+12)+"px");
+        })
+        .on("mouseleave", () => tip.style("opacity",0).style("transform","translateY(6px)"))
+        .on("click", (event, d) => updatePanel(stats[d.month]));
+
+      // Center disk
+      g.append("circle").attr("r", rBase-22).attr("fill","#fff").attr("stroke","var(--border)").attr("stroke-width",1.0);
+      g.append("text").attr("text-anchor","middle").attr("y",-6)
+        .style("font-family","var(--serif)").style("font-size","18px").style("font-weight","750").style("fill","var(--navy)")
+        .text("2025");
+      g.append("text").attr("class","anno").attr("text-anchor","middle").attr("y",14).text("social calendar");
+
+      updatePanel(stats[0]);
+    } catch (e) {
+      console.error(e);
+      document.getElementById("chart").innerHTML = `<div class="error">Render error: ${String(e)}</div>`;
+    }
+
+    // Post height to parent for auto-resize in embedding page
+    (function(){
+      const postHeight = () => {
+        const h = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight
+        );
+        window.parent?.postMessage({ type: "social-calendar-height", height: h }, "*");
+      };
+      postHeight();
+      const ro = new ResizeObserver(postHeight);
+      ro.observe(document.documentElement);
+      window.addEventListener("load", postHeight);
+      window.addEventListener("resize", postHeight);
+    })();
+  </script>
+</body>
+</html>
+

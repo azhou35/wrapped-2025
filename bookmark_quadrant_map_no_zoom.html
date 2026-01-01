@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bookmark Map — Interior↔External × Physical↔Digital</title>
+  <style>
+    :root {
+  --bg: #fff8ef;
+  --panel: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --grid: rgba(15,23,42,0.08);
+  --axis: rgba(15,23,42,0.14);
+  --accent: #086788;
+    }
+    html, body {
+  margin: 0; height: 100%; background: var(--bg); color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .wrap { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+  header {
+      padding: 14px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid rgba(15,23,42,0.08);
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    }
+    h1 { font-size: 14px; margin: 0; font-weight: 650; letter-spacing: 0.2px; }
+    .sub { margin-top: 4px; font-size: 12px; color: var(--muted); }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  input[type="search"] {
+      width: min(44vw, 420px);
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(15,23,42,0.04);
+      border: 1px solid rgba(15,23,42,0.12);
+      color: var(--text);
+      outline: none;
+    }
+  input[type="search"]::placeholder { color: rgba(71,85,105,0.6); }
+  label {
+      font-size: 12px; color: var(--muted); user-select: none;
+      display: flex; gap: 8px; align-items: center;
+      padding: 8px 10px; border-radius: 10px;
+      border: 1px solid rgba(15,23,42,0.12);
+      background: rgba(15,23,42,0.04);
+    }
+    main { position: relative; overflow: hidden; }
+    #chart { width: 100%; height: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; max-width: 420px;
+      padding: 10px 12px; border-radius: 12px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(15,23,42,0.12);
+      box-shadow: 0 14px 44px rgba(0,0,0,0.18);
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+    .tooltip.on { opacity: 1; transform: translateY(0px); }
+    .tt-title { font-size: 13px; font-weight: 650; line-height: 1.25; margin-bottom: 6px; }
+    .tt-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+    .tt-note { margin-top: 8px; font-size: 12px; line-height: 1.35; color: rgba(230,232,238,0.88); }
+    .hint {
+      position: absolute; right: 14px; bottom: 12px;
+      font-size: 12px; color: rgba(71,85,105,0.9);
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(15,23,42,0.12);
+      padding: 8px 10px; border-radius: 10px; backdrop-filter: blur(6px);
+    }
+    .legend {
+      position: absolute; left: 14px; bottom: 12px;
+      display: grid; gap: 6px; font-size: 12px;
+      color: rgba(71,85,105,0.95);
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(15,23,42,0.12);
+      padding: 10px 10px; border-radius: 12px; backdrop-filter: blur(6px);
+    }
+    .legend .row { display: flex; align-items: center; gap: 10px; }
+    .swatch { width: 10px; height: 10px; border-radius: 999px; border: 1px solid rgba(15,23,42,0.12); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Bookmark Map — Interior ↔ External  ×  Physical ↔ Digital</h1>
+        <div class="sub">Each dot is a bookmark title. Hover for details. Click to open. Scroll/pinch to zoom, drag to pan.</div>
+      </div>
+      <div class="controls">
+        <input id="q" type="search" placeholder="Search title / domain / arc… (e.g., 'GPU', 'Proust', 'Asterisk')" />
+        <label title="Show labels (can get crowded)">
+          <input id="labels" type="checkbox" />
+          Show labels
+        </label>
+        <label title="Only show items matching the search query">
+          <input id="dim" type="checkbox" checked />
+          Dim non-matches
+        </label>
+      </div>
+    </header>
+    <main>
+      <svg id="chart"></svg>
+      <div id="tt" class="tooltip"></div>
+      <div class="legend" id="legend"></div>
+      <div class="hint">Tip: hover for details • click a dot to open • search “gpu”, “city”, “writing”, “evaluation”</div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+  // ---- Data ----
+  const data = [{"title": "Complex Systems | The Point Magazine", "link": "https://thepointmag.com", "domain": "thepointmag.com", "arc": "Limits of Measurement & Knowing", "month": "October 2025", "note": "Highlights: (1) 'My brain seems to comprehend the world… rainbow confetti.' (2) 'We continued to litigate strategies for evaluating AI…' (3) '…try to love the questions… live along some distant day into the answer.' (4) 'Unlike the corresponding concept in psychology… inability to access them.'", "x": -0.15768502246068908, "y": 0.5703858077154462}, {"title": "Lifespan of AI Chips: The $300 Billion Question - CITP Blog", "link": "https://blog.citp.princeton.edu", "domain": "blog.citp.princeton.edu", "arc": "Scale & Infrastructure Reality", "month": "October 2025", "note": "About the economic/operational implications of how long AI accelerators remain useful; saved for thinking about depreciation + infra planning.", "x": 0.6830583673792562, "y": -0.7963100006585732}, {"title": "Finding Person-Problem Fit - Compound Manual", "link": "https://manual.compoundplanning.com", "domain": "manual.compoundplanning.com", "arc": "Practice, Craft & Personal OS", "month": "October 2025", "note": "Framework for aligning your strengths and motivations with the right problem spaces; saved for career/practice calibration.", "x": -0.2801326037128765, "y": 0.4713974424780807}, {"title": "AI Infra Handbook", "link": "https://ai-infra.guide", "domain": "ai-infra.guide", "arc": "Scale & Infrastructure Reality", "month": "October 2025", "note": "Reference guide to AI infrastructure (compute, networking, storage, reliability); saved as an infra primer / checklist.", "x": 0.8002705774806138, "y": -0.7225043725856822}, {"title": "Why I don't worry (as much) about big tech's depreciation schedule", "link": "https://mbi-deepdives.com", "domain": "mbi-deepdives.com", "arc": "Scale & Infrastructure Reality", "month": "October 2025", "note": "Argument about why depreciation schedules may mislead when thinking about big-tech capex and infra value capture.", "x": 0.6473011156351541, "y": -0.6011857987174731}, {"title": "Making invisible understanding visible", "link": "https://cognitivemedium.com", "domain": "cognitivemedium.com", "arc": "Limits of Measurement & Knowing", "month": "October 2025", "note": "Highlight: 'Unlike the corresponding concept in psychology… inability to access them.' Saved for tacit knowledge + measurability themes.", "x": 0.09790294502812971, "y": 0.4744022300430579}, {"title": "How I've run major projects | benkuhn.net", "link": "https://benkuhn.net", "domain": "benkuhn.net", "arc": "Practice, Craft & Personal OS", "month": "September 2025", "note": "Practical notes on executing major projects; saved for TPM operating patterns and project hygiene.", "x": -0.36131410817879117, "y": 0.6922325512865168}, {"title": "Lessons learned from three years in cloud supercomputing", "link": "https://blog.glennklockwood.com", "domain": "blog.glennklockwood.com", "arc": "Scale & Infrastructure Reality", "month": "September 2025", "note": "Lessons from operating cloud supercomputing/HPC; saved for GPU-at-scale operational intuition.", "x": 0.7325958263507569, "y": -0.8082031081333299}, {"title": "Smth Smth GPU Related", "link": "https://sodakeyeatsmush.notion.site", "domain": "sodakeyeatsmush.notion.site", "arc": "Scale & Infrastructure Reality", "month": "September 2025", "note": "Personal notes / doc about GPUs; saved as a scratchpad reference.", "x": 0.6848437674052184, "y": -0.7817730221552246}, {"title": "The Rise of the Traveling Third Space - by Patrick Kho", "link": "https://thechow.net", "domain": "thechow.net", "arc": "Interiority, Memory & Writing", "month": "September 2025", "note": "Essay on ‘third spaces’ and modern social geography; saved for place/identity writing threads.", "x": -0.6221770788664411, "y": 0.9011995638560503}, {"title": "Fonts In Use – Type at work in the real world.", "link": "https://fontsinuse.com", "domain": "fontsinuse.com", "arc": "Other / Mixed", "month": "August 2025", "note": "Design archive of typography in context; saved for visual reference/inspiration.", "x": -0.024294563637649286, "y": 0.14709619645194524}, {"title": "Infrastructure TPMs are a different breed – Michael Gat", "link": "https://michaelgat.com", "domain": "michaelgat.com", "arc": "Scale & Infrastructure Reality", "month": "August 2025", "note": "Reflection on infra TPM work; saved for role identity and craft language.", "x": 0.73957856759652, "y": -0.8605754850084371}, {"title": "In a Tiny Space With a Spare Korean Menu, Sunn’s Makes Magic - The New York Times", "link": "https://nytimes.com", "domain": "nytimes.com", "arc": "Place, Cities & Belonging", "month": "August 2025", "note": "Restaurant feature; saved for NYC food/scene memory.", "x": 0.4623988502641206, "y": -0.6962240778669306}, {"title": "IIIa. Racing to the Trillion-Dollar Cluster - SITUATIONAL AWARENESS", "link": "https://situational-awareness.ai", "domain": "situational-awareness.ai", "arc": "Scale & Infrastructure Reality", "month": "August 2025", "note": "On the race to build massive AI clusters; saved for compute geopolitics + scale narratives.", "x": 0.7996188389951407, "y": -0.5977345260297261}, {"title": "GB200 Hardware Architecture – Component Supply Chain & BOM – SemiAnalysis", "link": "https://semianalysis.com", "domain": "semianalysis.com", "arc": "Scale & Infrastructure Reality", "month": "August 2025", "note": "Hardware architecture + supply-chain/BOM analysis; saved for systems context.", "x": 0.7160418567587719, "y": -0.860746490836783}, {"title": "Randysfoto - Randall Xiao", "link": "https://randysfoto.com", "domain": "randysfoto.com", "arc": "Other / Mixed", "month": "August 2025", "note": "Photography portfolio; saved for aesthetic reference.", "x": -0.08227639350860295, "y": 0.08630088505947517}, {"title": "torpedo the ark: Notes on 'The Crisis of Narration' by Byung-Chul Han (Part 1)", "link": "https://torpedotheark.blogspot.com", "domain": "torpedotheark.blogspot.com", "arc": "Interiority, Memory & Writing", "month": "August 2025", "note": "Reading notes on narration/crisis; saved for writing/attention themes.", "x": -0.7378201496712444, "y": 0.8038919538524681}, {"title": "How to make something great", "link": "https://ryolu.notion.site", "domain": "ryolu.notion.site", "arc": "Other / Mixed", "month": "August 2025", "note": "Notes/playbook on making great work; saved for craft + ambition reminders.", "x": -0.07769054188106451, "y": 0.027544330211250172}, {"title": "looky!", "link": "https://looky.world", "domain": "looky.world", "arc": "Other / Mixed", "month": "August 2025", "note": "Site about ‘looky’ / consumption log; saved as a personal artifact.", "x": 0.028642992395591694, "y": -0.11667524111845419}, {"title": "The Madeleine Excerpt From Remembrance of Things Past, by Marcel Proust | DailyGood", "link": "https://dailygood.org", "domain": "dailygood.org", "arc": "Interiority, Memory & Writing", "month": "August 2025", "note": "Proust excerpt (madeleine/memory); saved for memory + perception motifs.", "x": -0.7134822549539345, "y": 0.6858088552103865}, {"title": "Schedule - Large Language Models: Methods and Applications / Fall 2024", "link": "https://2024.cmu-llms.org", "domain": "2024.cmu-llms.org", "arc": "Other / Mixed", "month": "August 2025", "note": "Course schedule/resources for LLM methods; saved as a syllabus anchor.", "x": 0.09374944147275516, "y": -0.15621862015133225}, {"title": "Why I'm Betting Against AI Agents in 2025 (Despite Building Them)", "link": "https://utkarshkanwat.com", "domain": "utkarshkanwat.com", "arc": "Other / Mixed", "month": "August 2025", "note": "Skeptical argument about near-term agents; saved for product/ux realism.", "x": 0.10850069302099306, "y": -0.06376587577251853}, {"title": "Tech Philosophy and AI Opportunity – Stratechery by Ben Thompson", "link": "https://stratechery.com", "domain": "stratechery.com", "arc": "Other / Mixed", "month": "July 2025", "note": "Strategic lens on AI opportunities + philosophy; saved for framing/strategy.", "x": -0.029106155424170707, "y": -0.05066500277041108}, {"title": "Content and Community – Stratechery by Ben Thompson", "link": "https://stratechery.com", "domain": "stratechery.com", "arc": "Other / Mixed", "month": "July 2025", "note": "On content/community dynamics; saved for creator/community thinking.", "x": -0.03617204917272833, "y": 0.05416728436811064}, {"title": "Fireworks AI | Forward Deployed Product Manager", "link": "https://app9.greenhouse.io", "domain": "app9.greenhouse.io", "arc": "Other / Mixed", "month": "July 2025", "note": "Job post; saved as a market signal / role archetype reference.", "x": 0.01900926883076534, "y": -0.021413958194063505}, {"title": "Non-Determinism of “Deterministic” LLM Settings", "link": "https://arxiv.org", "domain": "arxiv.org", "arc": "Limits of Measurement & Knowing", "month": "July 2025", "note": "Paper about nondeterminism in LLM inference/settings; saved for reliability/engineering nuance.", "x": -0.005325773224543267, "y": 0.4904164675158487}, {"title": "22. Nadia Asparouhova - Ideas That Infect - Jackson Dahl", "link": "https://jacksondahl.com", "domain": "jacksondahl.com", "arc": "Other / Mixed", "month": "July 2025", "note": "Interview/profile; saved for idea transmission + intellectual biography.", "x": 0.1527860170981814, "y": 0.15616684656035315}, {"title": "Annie_Zhou_Resume - Google Docs", "link": "https://docs.google.com", "domain": "docs.google.com", "arc": "Other / Mixed", "month": "July 2025", "note": "Personal doc; saved as a reference link.", "x": 0.061042156925201915, "y": -0.03084055604665554}, {"title": "Build Your Personal Monopoly", "link": "https://echonotes.ai", "domain": "echonotes.ai", "arc": "Practice, Craft & Personal OS", "month": "July 2025", "note": "Notes on building a unique advantage; saved for career leverage framing.", "x": -0.593136695950091, "y": 0.4179958362057796}, {"title": "Gradient Ascent #10 - by Albert Azout - Gradient Ascent", "link": "https://albertazout.substack.com", "domain": "albertazout.substack.com", "arc": "Other / Mixed", "month": "July 2025", "note": "Newsletter issue; saved for thinking prompts.", "x": 0.1733035577794778, "y": -0.13968059428028776}, {"title": "AI Data Center Build-Out - Level Ventures", "link": "https://levelvc.com", "domain": "levelvc.com", "arc": "Scale & Infrastructure Reality", "month": "July 2025", "note": "Overview of AI DC buildout drivers; saved for infra/energy narrative.", "x": 0.846973062808852, "y": -0.6564689456127745}, {"title": "statics.teams.cdn.office.net safelinks / PowerBI link", "link": "https://statics.teams.cdn.office.net", "domain": "statics.teams.cdn.office.net", "arc": "Other / Mixed", "month": "July 2025", "note": "Saved link wrapper (likely PowerBI/Teams); kept as a pointer to a report.", "x": -0.10844371319246564, "y": 0.1439951665336255}, {"title": "How to Pick a Career (That Actually Fits You) — Wait But Why", "link": "https://waitbutwhy.com", "domain": "waitbutwhy.com", "arc": "Practice, Craft & Personal OS", "month": "June 2025", "note": "Long-form guide to career fit; saved for big-picture career decisions.", "x": -0.5725534759328127, "y": 0.6242404758032041}, {"title": "Code Tutorials - AI for Humanists", "link": "https://aiforhumanists.com", "domain": "aiforhumanists.com", "arc": "Other / Mixed", "month": "June 2025", "note": "Tutorials for AI concepts; saved as approachable learning material.", "x": 0.19338021119203885, "y": 0.10267745678375417}, {"title": "paper5712.pdf", "link": "https://ceur-ws.org", "domain": "ceur-ws.org", "arc": "Other / Mixed", "month": "June 2025", "note": "Saved a PDF (CEUR-WS); topic unclear from title alone—kept as a reference PDF.", "x": 0.09681716187550156, "y": -0.1175307159259754}, {"title": "The Kool Aid Factory :: Writing In Public, Inside Your Company", "link": "https://koolaidfactory.com", "domain": "koolaidfactory.com", "arc": "Interiority, Memory & Writing", "month": "June 2025", "note": "Essay on writing in public inside organizations; saved for internal comms/culture.", "x": -0.8900719529669899, "y": 0.7067516065707318}, {"title": "The Library of Missing Datasets — MIMI ỌNỤỌHA", "link": "https://mimionuoha.com", "domain": "mimionuoha.com", "arc": "AI Society, Policy & Ethics", "month": "June 2025", "note": "Project about absence in data and power; saved for data ethics + narrative.", "x": 0.5939407516093786, "y": 0.41467493739320777}, {"title": "Construction of urban collective memory maps… | npj Heritage Science", "link": "https://nature.com", "domain": "nature.com", "arc": "Place, Cities & Belonging", "month": "June 2025", "note": "Research on collective memory maps; saved for memory/place research.", "x": 0.38232305352397333, "y": -0.4891357774192318}, {"title": "A visual future: GraphRAG and AI observability | TechTarget", "link": "https://techtarget.com", "domain": "techtarget.com", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "GraphRAG + observability; saved for retrieval/observability thinking.", "x": 0.6514187642935242, "y": -0.8436529949851457}, {"title": "third friend city", "link": "https://thirdfriend.city", "domain": "thirdfriend.city", "arc": "Place, Cities & Belonging", "month": "June 2025", "note": "Site about 'third friend city'; saved for place/community exploration.", "x": 0.27469239475314794, "y": -0.4594480962887053}, {"title": "Chaos engineering - Wikipedia", "link": "https://en.wikipedia.org/wiki/Chaos_engineering", "domain": "en.wikipedia.org", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "Chaos engineering overview; saved as a quick reference.", "x": 0.7620247453898249, "y": -0.6434588909506469}, {"title": "Google - Site Reliability Engineering", "link": "https://sre.google", "domain": "sre.google", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "Google SRE resources; saved as canonical SRE reference.", "x": 0.7556188439544335, "y": -0.8464226155160979}, {"title": "Show HN: Neurox – GPU Observability for AI Infra | Hacker News", "link": "https://news.ycombinator.com", "domain": "news.ycombinator.com", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "Tool launch for GPU observability; saved for infra tooling landscape.", "x": 0.6513739153280328, "y": -0.7085822055904619}, {"title": "ArXiV: Compute at Scale - A broad investigation into the data center industry", "link": "https://arxiv.org", "domain": "arxiv.org", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "Paper/report on data center industry; saved for macro infra context.", "x": 0.6713927724169084, "y": -0.6217760466252864}, {"title": "Trends in AI Supercomputers | Epoch AI", "link": "https://epoch.ai", "domain": "epoch.ai", "arc": "Scale & Infrastructure Reality", "month": "June 2025", "note": "Analysis of AI supercomputers; saved for trend tracking.", "x": 0.7582185835922646, "y": -0.8615208067771795}, {"title": "The Trouble with Friends | The New Yorker", "link": "https://archive.is", "domain": "archive.is", "arc": "Interiority, Memory & Writing", "month": "June 2025", "note": "New Yorker piece (archived); saved for friendship/social texture writing.", "x": -0.5818014607512861, "y": 0.5823825492645573}, {"title": "Open source in the age of AI | McKinsey & Company", "link": "https://mckinsey.com", "domain": "mckinsey.com", "arc": "AI Society, Policy & Ethics", "month": "June 2025", "note": "Industry perspective on OSS + AI; saved for ecosystem framing.", "x": 0.5551272816129791, "y": 0.21960757355662236}, {"title": "How Ken Liu Translates, and Why He Writes - Public Books", "link": "https://publicbooks.org", "domain": "publicbooks.org", "arc": "Interiority, Memory & Writing", "month": "June 2025", "note": "Interview/essay on translation/writing; saved for craft insights.", "x": -0.7766268780191026, "y": 0.6172314121684133}, {"title": "Agency is just complexity science in a hoodie", "link": "https://snbafana.substack.com", "domain": "snbafana.substack.com", "arc": "Interiority, Memory & Writing", "month": "May 2025", "note": "Essay connecting agency to complexity science; saved for systems/agency lens.", "x": -0.73879881473463, "y": 0.8614545570526865}, {"title": "The Making of Practice, a Book on Design and Craft by Figma | Figma Blog", "link": "https://figma.com/blog", "domain": "figma.com", "arc": "Practice, Craft & Personal OS", "month": "May 2025", "note": "On design practice/craft; saved for making/practice inspiration.", "x": -0.5059791050748851, "y": 0.48148306939552615}, {"title": "Inside arXiv—the Most Transformative Platform in All of Science | WIRED", "link": "https://wired.com", "domain": "wired.com", "arc": "Scale & Infrastructure Reality", "month": "May 2025", "note": "Feature on arXiv; saved for science infrastructure stories.", "x": 0.8049945674824982, "y": -0.7496655709901046}, {"title": "Searching for outliers | benkuhn.net", "link": "https://benkuhn.net", "domain": "benkuhn.net", "arc": "Practice, Craft & Personal OS", "month": "May 2025", "note": "On outliers/selection; saved for reasoning/career heuristics.", "x": -0.2745534457649462, "y": 0.6850390736560894}, {"title": "Marry Your City - by Daniel Golliher - Maximum New York", "link": "https://maximumnewyork.com", "domain": "maximumnewyork.com", "arc": "Interiority, Memory & Writing", "month": "May 2025", "note": "Essay on belonging to a city; saved for place writing.", "x": -0.8570662181002707, "y": 0.6177127714566217}, {"title": "Does AI Progress Have a Speed Limit?—Asterisk", "link": "https://asteriskmag.com", "domain": "asteriskmag.com", "arc": "Interiority, Memory & Writing", "month": "April 2025", "note": "Essay on constraints/speed limits in AI progress; saved for trend skepticism.", "x": -0.8396094988448567, "y": 0.8506452947018308}, {"title": "Unparalleled Misalignments", "link": "https://rickiheicklen.com", "domain": "rickiheicklen.com", "arc": "Other / Mixed", "month": "April 2025", "note": "Piece on misalignment; saved for alignment discourse.", "x": 0.17192546485502397, "y": 0.1363125135740993}, {"title": "What Freud Said About Writing Fiction - The Atlantic", "link": "https://theatlantic.com", "domain": "theatlantic.com", "arc": "Interiority, Memory & Writing", "month": "April 2025", "note": "On Freud + fiction writing; saved for writing craft.", "x": -0.9272983670135257, "y": 0.8682448037011188}, {"title": "Shanzhai - Wikipedia", "link": "https://en.wikipedia.org/wiki/Shanzhai", "domain": "en.wikipedia.org", "arc": "Other / Mixed", "month": "April 2025", "note": "Reference on shanzhai/copycat culture; saved for culture/industry thinking.", "x": -0.10128219198698228, "y": 0.12418298789863076}, {"title": "ridethesubway", "link": "https://vanessah9.github.io/ridethesubway", "domain": "vanessah9.github.io", "arc": "Place, Cities & Belonging", "month": "April 2025", "note": "Project/site; saved for NYC/subway artifact.", "x": 0.5401095026708463, "y": -0.6423164418508105}, {"title": "Can We Build a Five Gigawatt Data Center?—Asterisk", "link": "https://asteriskmag.com", "domain": "asteriskmag.com", "arc": "Scale & Infrastructure Reality", "month": "April 2025", "note": "Feasibility of 5GW data centers; saved for energy/infra narratives.", "x": 0.6539368173396067, "y": -0.6688384719143712}, {"title": "return home - TYLER YIN", "link": "https://tyleryin.online", "domain": "tyleryin.online", "arc": "Interiority, Memory & Writing", "month": "April 2025", "note": "Personal site/essay; saved for writing/aesthetic.", "x": -0.7322059601457338, "y": 0.5934849447066628}, {"title": "GPU Glossary", "link": "https://modal.com/gpu-glossary", "domain": "modal.com", "arc": "Scale & Infrastructure Reality", "month": "April 2025", "note": "GPU terminology primer; saved for quick reference.", "x": 0.9257550927614223, "y": -0.7094121543176967}, {"title": "Values-in-the-Wild-Paper.pdf", "link": "https://assets.anthropic.com", "domain": "assets.anthropic.com", "arc": "Limits of Measurement & Knowing", "month": "April 2025", "note": "PDF on values-in-the-wild; saved for safety/values research.", "x": -0.1790161086523477, "y": 0.5540151603203303}, {"title": "The Idea Factory: Bell Labs and the Great Age of American Innovation", "link": "https://s3.amazonaws.com", "domain": "s3.amazonaws.com", "arc": "Other / Mixed", "month": "April 2025", "note": "Book asset; saved for innovation history.", "x": 0.18257298648184467, "y": -0.02674226598039788}, {"title": "Kwame-Anthony-Appiah-The-Ethics-of-Identity.pdf", "link": "https://blogs.baruch.cuny.edu", "domain": "blogs.baruch.cuny.edu", "arc": "Interiority, Memory & Writing", "month": "April 2025", "note": "PDF on ethics of identity; saved for identity thinking.", "x": -0.7080522334431419, "y": 0.851293644635308}, {"title": "Rendering Me into We: A Review of The Crisis of Narration - Front Porch Republic", "link": "https://frontporchrepublic.com", "domain": "frontporchrepublic.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Review/essay on narration and identity; saved for narration themes.", "x": -0.7860907319225582, "y": 0.603636318853506}, {"title": "Semiconductors: A Field Guide", "link": "https://xrw.craft.me", "domain": "xrw.craft.me", "arc": "Scale & Infrastructure Reality", "month": "March 2025", "note": "Field guide to semiconductors; saved for hardware supply-chain literacy.", "x": 0.6571557064557345, "y": -0.6195378010369692}, {"title": "AI as Normal Technology", "link": "https://aisnakeoil.com", "domain": "aisnakeoil.com", "arc": "Other / Mixed", "month": "March 2025", "note": "Framing AI as normal tech with limits; saved for grounding narratives.", "x": 0.030163160925769053, "y": -0.14181382878725737}, {"title": "NVIDIA GTC 2025: Overview - by Glenn K. Lockwood", "link": "https://morethanmoore.substack.com", "domain": "morethanmoore.substack.com", "arc": "Other / Mixed", "month": "March 2025", "note": "GTC overview; saved for hardware/industry tracking.", "x": 0.21785220018305168, "y": 0.16467567840234273}, {"title": "Felt – The best way to make maps on the internet", "link": "https://felt.com", "domain": "felt.com", "arc": "Place, Cities & Belonging", "month": "March 2025", "note": "Mapping tool; saved for making maps/projects.", "x": 0.3634322093272191, "y": -0.7189166717950527}, {"title": "Why Place Matters — The New Atlantis", "link": "https://thenewatlantis.com", "domain": "thenewatlantis.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on place; saved for place/meaning.", "x": -0.7657457195585001, "y": 0.8907954728139553}, {"title": "Putting Ideas into Words", "link": "https://paulgraham.com/words.html", "domain": "paulgraham.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Paul Graham on writing; saved for writing practice.", "x": -0.9298029432165908, "y": 0.6177091291005977}, {"title": "AI 2027", "link": "https://ai-2027.com", "domain": "ai-2027.com", "arc": "Other / Mixed", "month": "March 2025", "note": "Scenario forecasting; saved for futures framing.", "x": -0.11615219632772546, "y": -0.1374855016631739}, {"title": "The Kool Aid Factory :: The Shipping Great Work Issue", "link": "https://koolaidfactory.com", "domain": "koolaidfactory.com", "arc": "Other / Mixed", "month": "March 2025", "note": "Newsletter issue; saved for shipping/craft culture.", "x": 0.08111424194907638, "y": 0.15863654591577048}, {"title": "Asian American Writers' Workshop Submission Manager", "link": "https://aaww.submittable.com", "domain": "aaww.submittable.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Submission portal; saved for writing submissions.", "x": -0.7205225457601534, "y": 0.7814514926847655}, {"title": "Infinite games - Graham Duncan Blog", "link": "https://grahamduncan.blog", "domain": "grahamduncan.blog", "arc": "Other / Mixed", "month": "March 2025", "note": "On infinite games; saved for philosophy.", "x": -0.018194616001144664, "y": 0.0666423153613327}, {"title": "The Role of the Writer | the art of technology", "link": "https://annasofia.xyz", "domain": "annasofia.xyz", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on writer’s role; saved for craft.", "x": -0.7871516905951201, "y": 0.6740085094198605}, {"title": "The Yale Review | Jesse Damiani: “Is Life Online Real?”", "link": "https://yalereview.org", "domain": "yalereview.org", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on online/offline reality; saved for culture reflection.", "x": -0.5839791150703046, "y": 0.6621977206999896}, {"title": "San Francisco", "link": "https://aileenis.online", "domain": "aileenis.online", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Personal essay/site; saved for city writing.", "x": -0.5883367075254993, "y": 0.8627232081379562}, {"title": "Multi-layered calendars « julian.digital", "link": "https://julian.digital", "domain": "julian.digital", "arc": "Other / Mixed", "month": "March 2025", "note": "On calendars; saved for productivity/time.", "x": 0.16305739998190139, "y": 0.09839103288911073}, {"title": "The case against conversational interfaces « julian.digital", "link": "https://julian.digital", "domain": "julian.digital", "arc": "Other / Mixed", "month": "March 2025", "note": "Critique of conversational UIs; saved for product/UX thinking.", "x": 0.14491594528661011, "y": -0.14178201586049563}, {"title": "A Tale of Two Cities", "link": "https://pudding.cool", "domain": "pudding.cool", "arc": "Place, Cities & Belonging", "month": "March 2025", "note": "Data story; saved for city/culture comparison.", "x": 0.5799409166700069, "y": -0.5234932487349709}, {"title": "Men are from Chelsea, Women are from Park Slope", "link": "https://pudding.cool", "domain": "pudding.cool", "arc": "Place, Cities & Belonging", "month": "March 2025", "note": "Data story; saved for NYC neighborhood sociology.", "x": 0.572937886021784, "y": -0.717981969646174}, {"title": "Fundamentals of Data Visualization", "link": "https://clauswilke.com/dataviz", "domain": "clauswilke.com", "arc": "Practice, Craft & Personal OS", "month": "March 2025", "note": "Book/course resource; saved for viz practice.", "x": -0.5446462841226362, "y": 0.46629047032824966}, {"title": "Featured Poet: Kaveh Akbar – The Indianapolis Review", "link": "https://theindianapolisreview.com", "domain": "theindianapolisreview.com", "arc": "Scale & Infrastructure Reality", "month": "March 2025", "note": "Poetry feature; saved for reading.", "x": 0.7598808366129829, "y": -0.8260425844825903}, {"title": "On the Wor(l)d as Collage, or Intertextuality – Syllabus", "link": "https://syllabusproject.org", "domain": "syllabusproject.org", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on collage/intertextuality; saved for writing theory.", "x": -0.7995737397460205, "y": 0.6553785681364542}, {"title": "Host a walk", "link": "https://tally.so", "domain": "tally.so", "arc": "Other / Mixed", "month": "March 2025", "note": "Form/tool link; saved for hosting a walk.", "x": -0.066742655256936, "y": 0.1603785020346703}, {"title": "Crisis of Confidence - by Kevin Baker", "link": "https://artificialbureaucracy.substack.com", "domain": "artificialbureaucracy.substack.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Newsletter essay; saved for institutional/cultural thinking.", "x": -0.8983812206630551, "y": 0.7076349986478768}, {"title": "Explained: Generative AI’s environmental impact | MIT News", "link": "https://news.mit.edu", "domain": "news.mit.edu", "arc": "AI Society, Policy & Ethics", "month": "March 2025", "note": "Explainer on environmental impacts; saved for sustainability framing.", "x": 0.6227613931691184, "y": 0.2684991776357636}, {"title": "This must be the place - by Josh Kramer", "link": "https://newpublic.substack.com", "domain": "newpublic.substack.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on place; saved for place writing.", "x": -0.691703614024842, "y": 0.5870925640354614}, {"title": "waterworks.digital", "link": "https://waterworks.digital", "domain": "waterworks.digital", "arc": "Other / Mixed", "month": "March 2025", "note": "Digital garden; saved for web inspiration.", "x": 0.19258591396794328, "y": 0.061008430458840086}, {"title": "Ensemble Park", "link": "https://ensemblepark.com", "domain": "ensemblepark.com", "arc": "Place, Cities & Belonging", "month": "March 2025", "note": "Project/site; saved for community/place inspiration.", "x": 0.28262134239371434, "y": -0.5065340790842973}, {"title": "Maintenance Is Sorely Needed In The Fight Against Global Warming", "link": "https://noemamag.com", "domain": "noemamag.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay on maintenance; saved for maintenance as cultural lens.", "x": -0.7755789325864937, "y": 0.7829914780457019}, {"title": "Dialects of Green - Joanne Lam", "link": "https://writing.joannelam.com", "domain": "writing.joannelam.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay; saved for environmental writing.", "x": -0.9136476968190743, "y": 0.8403720667935842}, {"title": "Of Vultures and Violet - Joanne Lam", "link": "https://writing.joannelam.com", "domain": "writing.joannelam.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay; saved for poetry/essay.", "x": -0.8161969817444209, "y": 0.7085419313839035}, {"title": "I Know What You Think of Me - The New York Times (archive)", "link": "https://archive.nytimes.com", "domain": "archive.nytimes.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "NYT archived piece; saved for essay reading.", "x": -0.6036600219536712, "y": 0.703623107730789}, {"title": "Roads and Bridges: The Unseen Labor Behind Our Digital Infrastructure / Ford Foundation", "link": "https://fordfoundation.org", "domain": "fordfoundation.org", "arc": "Scale & Infrastructure Reality", "month": "March 2025", "note": "Report on invisible labor behind digital infra; saved for infra/humans theme.", "x": 0.7179612621264442, "y": -0.6847729653852929}, {"title": "Nadia Asparouhova | Idea machines", "link": "https://nadia.xyz", "domain": "nadia.xyz", "arc": "Other / Mixed", "month": "March 2025", "note": "Index of Nadia’s work; saved for idea/culture.", "x": 0.14011004967384738, "y": 0.06843911276395413}, {"title": "Working in Public: The Making and Maintenance of Open Source Software (book)", "link": "https://amazon.com", "domain": "amazon.com", "arc": "AI Society, Policy & Ethics", "month": "March 2025", "note": "Book listing; saved as a reference for OSS culture.", "x": 0.7650818119885126, "y": 0.22971882965176338}, {"title": "Playing With Guns (and Phones) | ARENA", "link": "https://arenamag.com", "domain": "arenamag.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay; saved for culture/tech critique.", "x": -0.7938139860666855, "y": 0.7176842706528689}, {"title": "PoetiCal", "link": "https://poetical.day", "domain": "poetical.day", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Daily poem site; saved for reading practice.", "x": -0.6639442650726867, "y": 0.7375569982285511}, {"title": "notes on intimacy", "link": "https://ava", "domain": "ava", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Personal notes; saved for intimacy writing.", "x": -0.7639131212872251, "y": 0.8463058369970661}, {"title": "24-038_51f8444f-502c-4139-8bf2-56eb4b65c58a.pdf", "link": "https://hbs.edu", "domain": "hbs.edu", "arc": "Other / Mixed", "month": "March 2025", "note": "Saved PDF (HBS); topic unclear from filename—kept as a reference PDF.", "x": 0.1015565622578274, "y": 0.0841690157130754}, {"title": "LatentLit", "link": "https://latentlit.goodfire.ai", "domain": "latentlit.goodfire.ai", "arc": "Other / Mixed", "month": "March 2025", "note": "Project/site; saved for AI+lit exploration.", "x": 0.22618430068627565, "y": -0.1152364050446163}, {"title": "The Pudding Svelte Starter - Starter Template - Made with Svelte", "link": "https://madewithsvelte.com", "domain": "madewithsvelte.com", "arc": "Other / Mixed", "month": "March 2025", "note": "Template; saved for building a Pudding-style project.", "x": 0.11662475242433713, "y": 0.08060539040262935}, {"title": "Believe in Something - by Jihad Esmail - Catching Strays", "link": "https://substack.com", "domain": "substack.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay; saved for reading.", "x": -0.683432628324589, "y": 0.8558101278836396}, {"title": "no exit - by Ava - bookbear express", "link": "https://substack.com", "domain": "substack.com", "arc": "Interiority, Memory & Writing", "month": "March 2025", "note": "Essay; saved for reading.", "x": -0.6110004116317724, "y": 0.7131551376039058}, {"title": "please-talk-to-me", "link": "https://jackielgu.github.io/please-talk-to-me/", "domain": "jackielgu.github.io", "arc": "Other / Mixed", "month": "March 2025", "note": "Interactive web piece; saved for web storytelling inspiration.", "x": 0.18272275399247245, "y": 0.08172768390312037}, {"title": "Earnestness", "link": "https://paulgraham.com/earnest.html", "domain": "paulgraham.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Paul Graham on earnestness; saved for writing/values.", "x": -0.7657438090713098, "y": 0.7913054518451228}, {"title": "Evergreen notes turn ideas into objects that you can manipulate — Steph Ango", "link": "https://stephango.com", "domain": "stephango.com", "arc": "Practice, Craft & Personal OS", "month": "February 2025", "note": "On evergreen notes; saved for knowledge management.", "x": -0.3076923569193325, "y": 0.4481562714274406}, {"title": "How I use Obsidian — Steph Ango", "link": "https://stephango.com", "domain": "stephango.com", "arc": "Practice, Craft & Personal OS", "month": "February 2025", "note": "Workflow for Obsidian; saved for PKM practice.", "x": -0.49739461054731965, "y": 0.5098739168839236}, {"title": "Swimming in July - by Henrik Karlsson - Escaping Flatland", "link": "https://henrikkarlsson.xyz", "domain": "henrikkarlsson.xyz", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Essay; saved for memoir/essay craft.", "x": -0.8110164652674031, "y": 0.7075994884636252}, {"title": "thieves recognize thieves - by rish vee - loaf of thought", "link": "https://substack.com", "domain": "substack.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Essay; saved for reading.", "x": -0.6235856883725118, "y": 0.6102516730689098}, {"title": "A blog post is a very long and complex search query… - Henrik Karlsson", "link": "https://henrikkarlsson.xyz", "domain": "henrikkarlsson.xyz", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "On blogging as search for people/ideas; saved for writing motivation.", "x": -0.8641748772408289, "y": 0.8375155934848626}, {"title": "Words of Courage from a Student of Literature | Medium", "link": "https://medium.com", "domain": "medium.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Essay; saved for reading.", "x": -0.7250667203858184, "y": 0.6412413764072679}, {"title": "MAKING SOFTWARE", "link": "https://makingsoftware.co", "domain": "makingsoftware.co", "arc": "Other / Mixed", "month": "February 2025", "note": "Resource on software making; saved for craft.", "x": 0.18455576163589854, "y": 0.05782601930150436}, {"title": "Shaman of words: The immortality of Eileen Chang", "link": "https://esplanade.com", "domain": "esplanade.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Essay on Eileen Chang; saved for literary interest.", "x": -0.8691646403770812, "y": 0.6964787416827117}, {"title": "Eternal return - Wikipedia", "link": "https://en.wikipedia.org/wiki/Eternal_return", "domain": "en.wikipedia.org", "arc": "Other / Mixed", "month": "February 2025", "note": "Reference; saved for philosophy.", "x": -0.0949455685738813, "y": 0.14374895273795094}, {"title": "Eileen Chang - Wikiquote", "link": "https://en.wikiquote.org/wiki/Eileen_Chang", "domain": "en.wikiquote.org", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Quotes reference; saved for writing.", "x": -0.8883384977742886, "y": 0.9091766900055056}, {"title": "Develop Ideas into Blog Posts with AI Writing Tools & Voice Notes", "link": "https://echonotes.ai", "domain": "echonotes.ai", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Tool/workflow; saved for writing process.", "x": -0.7895745951262243, "y": 0.8796678014075542}, {"title": "Make Something Wonderful | Steve Jobs", "link": "https://book.stevejobsarchive.com", "domain": "book.stevejobsarchive.com", "arc": "Other / Mixed", "month": "February 2025", "note": "Steve Jobs archive book; saved for inspiration.", "x": 0.07613448680521324, "y": 0.05767462997643152}, {"title": "Blog - Being a High-Leverage Generalist - char.blog", "link": "https://char.blog", "domain": "char.blog", "arc": "Practice, Craft & Personal OS", "month": "February 2025", "note": "On generalist leverage; saved for career framing.", "x": -0.5934822296824963, "y": 0.504744912817782}, {"title": "Cargo: Templates", "link": "https://cargo.site", "domain": "cargo.site", "arc": "Other / Mixed", "month": "February 2025", "note": "Website templates; saved for portfolio/web building.", "x": 0.16823561420157448, "y": 0.12960422249268838}, {"title": "If, Then: Technology and Poetics", "link": "https://ifthen.cargo.site", "domain": "ifthen.cargo.site", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Tech + poetics project; saved for web inspiration.", "x": -0.9288896985721984, "y": 0.632435633331173}, {"title": "The Ultra-Scale Playbook - Hugging Face Space", "link": "https://huggingface.co", "domain": "huggingface.co", "arc": "Scale & Infrastructure Reality", "month": "February 2025", "note": "Resource on scaling; saved for infra learning.", "x": 0.7192404019062502, "y": -0.8324505827348797}, {"title": "My review of Tatiana in New York City, New York", "link": "https://eatingreallywell.com", "domain": "eatingreallywell.com", "arc": "Place, Cities & Belonging", "month": "February 2025", "note": "Restaurant review; saved for food log.", "x": 0.27565719086808554, "y": -0.5038225556197163}, {"title": "I Want More Of You In Here: A Guide to Interiority In the Personal Essay and Memoir", "link": "https://substack.com", "domain": "substack.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Guide to interiority; saved for essay craft.", "x": -0.8053625912022224, "y": 0.9254751677055553}, {"title": "The AI Literary Review", "link": "https://ailiteraryreview.co.uk", "domain": "ailiteraryreview.co.uk", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "AI poetry journal; saved for AI+lit.", "x": -0.6239563881824624, "y": 0.5922133317920876}, {"title": "The Library Innovation Lab at Harvard University", "link": "https://lil.law.harvard.edu", "domain": "lil.law.harvard.edu", "arc": "Other / Mixed", "month": "February 2025", "note": "Lab site; saved for digital humanities interest.", "x": -0.08390710819370743, "y": -0.030992664455201636}, {"title": "Hello World - by Alexandra Sukin and rayouf - Context Aware", "link": "https://substack.com", "domain": "substack.com", "arc": "Other / Mixed", "month": "February 2025", "note": "Newsletter piece; saved for reading.", "x": -0.08579612245685332, "y": -0.019737514862729594}, {"title": "Missed Connections", "link": "https://ajy123.github.io", "domain": "ajy123.github.io", "arc": "Other / Mixed", "month": "February 2025", "note": "Web project; saved for web storytelling.", "x": 0.03607072443842672, "y": 0.031604256809596956}, {"title": "Database in the Browser, a Spec", "link": "https://instantdb.com", "domain": "instantdb.com", "arc": "Other / Mixed", "month": "February 2025", "note": "Spec; saved for technical curiosity.", "x": 0.07073166842589428, "y": -0.16302114989213207}, {"title": "Page | Books in Progress", "link": "https://books.worksinprogress.co", "domain": "books.worksinprogress.co", "arc": "Other / Mixed", "month": "February 2025", "note": "Books in progress; saved for reading list.", "x": -0.09299486660468272, "y": 0.004390756419019483}, {"title": "The Gentle Romance - by Richard Ngo - Asimov Press", "link": "https://asimov.press", "domain": "asimov.press", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Essay; saved for reading.", "x": -0.5932407234570106, "y": 0.5749657646578191}, {"title": "Improving Factuality with Explicit Working Memory (arXiv:2412.18069)", "link": "https://arxiv.org/abs/2412.18069", "domain": "arxiv.org", "arc": "Limits of Measurement & Knowing", "month": "February 2025", "note": "Paper on explicit working memory for factuality; saved for LLM research reading.", "x": 0.062391774980908185, "y": 0.4634092657113004}, {"title": "The Body Ecstatic by Simon Wu – Ursula - Hauser & Wirth", "link": "https://hauserwirth.com", "domain": "hauserwirth.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Art/essay; saved for art writing.", "x": -0.6174358851759312, "y": 0.7961710689370919}, {"title": "Easv4 size series - Azure Virtual Machines | Microsoft Learn", "link": "https://learn.microsoft.com", "domain": "learn.microsoft.com", "arc": "Scale & Infrastructure Reality", "month": "February 2025", "note": "Azure VM sizing reference; saved for infra work.", "x": 0.8331347972394747, "y": -0.7765275704037695}, {"title": "you’re still here, you’re gone, now / someone new – Ursula - Hauser & Wirth", "link": "https://hauserwirth.com", "domain": "hauserwirth.com", "arc": "Interiority, Memory & Writing", "month": "February 2025", "note": "Art/essay; saved for art writing.", "x": -0.7900065165245921, "y": 0.7614118939059349}, {"title": "Michael Dempsey's Notes – Being Known is Being Loved", "link": "https://notes.michaeldempsey.me", "domain": "notes.michaeldempsey.me", "arc": "Practice, Craft & Personal OS", "month": "January 2025", "note": "Evergreen notes; saved for relationships/meaning.", "x": -0.3565148827169358, "y": 0.6574513893498694}, {"title": "FALL 2014 by VISIONS - Issuu", "link": "https://issuu.com", "domain": "issuu.com", "arc": "Other / Mixed", "month": "January 2025", "note": "Magazine issue; saved for visual inspiration.", "x": 0.021293022788896457, "y": 0.049349695413687666}, {"title": "Against Interpretation.doc", "link": "https://static1.squarespace.com", "domain": "static1.squarespace.com", "arc": "Limits of Measurement & Knowing", "month": "January 2025", "note": "Susan Sontag essay doc; saved for criticism/art thinking.", "x": -0.10645890630000711, "y": 0.3827707625582747}, {"title": "A Vocabulary for the Almost-Disappeared", "link": "https://lastwordonnothing.com", "domain": "lastwordonnothing.com", "arc": "Interiority, Memory & Writing", "month": "January 2025", "note": "Essay; saved for language/poetics.", "x": -0.6887349256404524, "y": 0.8742479444631022}, {"title": "Episode 216 - Transcript — Philosophize This!", "link": "https://philosophizethis.org", "domain": "philosophizethis.org", "arc": "Other / Mixed", "month": "January 2025", "note": "Transcript; saved for philosophy reference.", "x": -0.06175912699935937, "y": 0.10912464948583502}, {"title": "Writers, how do you use obsidian… (r/ObsidianMD)", "link": "https://reddit.com", "domain": "reddit.com", "arc": "Practice, Craft & Personal OS", "month": "January 2025", "note": "Thread on Obsidian workflows; saved for PKM tactics.", "x": -0.41122697884711135, "y": 0.3719271665070968}, {"title": "On Typing Chinese - by afra - Reboot", "link": "https://joinreboot.org", "domain": "joinreboot.org", "arc": "Interiority, Memory & Writing", "month": "January 2025", "note": "Essay; saved for language/identity.", "x": -0.7012446414519206, "y": 0.8930358464836692}, {"title": "Berlin Interlude — Triangle House", "link": "https://triangle.house", "domain": "triangle.house", "arc": "Other / Mixed", "month": "January 2025", "note": "Residency/interlude page; saved for travel/creative context.", "x": 0.06374022559117068, "y": 0.15773823044675828}, {"title": "Guessing the Teacher's Password", "link": "https://lesswrong.com", "domain": "lesswrong.com", "arc": "Other / Mixed", "month": "January 2025", "note": "Post on security/guessing; saved for cognition/infosec curiosity.", "x": 0.15231076075749256, "y": 0.13206508924999857}, {"title": "Dario Amodei — On DeepSeek and Export Controls", "link": "https://darioamodei.com", "domain": "darioamodei.com", "arc": "Interiority, Memory & Writing", "month": "January 2025", "note": "Essay on export controls; saved for policy/AI geopolitics.", "x": -0.7944326207284892, "y": 0.8900877462327684}, {"title": "Speech-Language Models: A Deeper Dive into Voice AI • Hume AI", "link": "https://hume.ai", "domain": "hume.ai", "arc": "Other / Mixed", "month": "January 2025", "note": "Deep dive into voice models; saved for ML reading.", "x": -0.07284686576175663, "y": -0.07554474142741988}, {"title": "How To Understand Things - Nabeel S. Qureshi", "link": "https://nabeelqu.substack.com", "domain": "nabeelqu.substack.com", "arc": "Interiority, Memory & Writing", "month": "January 2025", "note": "Essay on understanding; saved for cognition/learning.", "x": -0.6341111831516286, "y": 0.9123994083102791}, {"title": "Holly Li.", "link": "https://thisishollyli.com", "domain": "thisishollyli.com", "arc": "Other / Mixed", "month": "January 2025", "note": "Portfolio/site; saved for design inspiration.", "x": 0.0762240321017392, "y": 0.0680864175334774}, {"title": "Up and Down the Ladder of Abstraction", "link": "https://worrydream.com/LadderOfAbstraction/", "domain": "worrydream.com", "arc": "Limits of Measurement & Knowing", "month": "January 2025", "note": "Bret Victor; saved for abstraction thinking.", "x": -0.1652738819237039, "y": 0.6240745204067963}, {"title": "Getting creative with embeddings", "link": "https://wattenberger.com", "domain": "wattenberger.com", "arc": "Other / Mixed", "month": "January 2025", "note": "Embeddings + creativity; saved for ML/product ideas.", "x": 0.22847078521700365, "y": 0.16334656202777909}, {"title": "LLMs are a tool for thought", "link": "https://wattenberger.com", "domain": "wattenberger.com", "arc": "Other / Mixed", "month": "January 2025", "note": "On LLMs as thought tools; saved for framing.", "x": 0.0012471194777747552, "y": -0.11365948264805122}];
+
+  // ---- Config ----
+  const colors = new Map([
+    ["Interiority, Memory & Writing", "#ff7ab6"],
+    ["Practice, Craft & Personal OS", "#a78bfa"],
+    ["Limits of Measurement & Knowing", "#7aa2ff"],
+    ["AI Society, Policy & Ethics", "#44d7b6"],
+    ["Place, Cities & Belonging", "#fbbf24"],
+    ["Scale & Infrastructure Reality", "#fb7185"],
+    ["Other / Mixed", "#94a3b8"],
+    ["Other", "#94a3b8"],
+    ["", "#94a3b8"],
+  ]);
+
+  const margin = { top: 36, right: 30, bottom: 44, left: 54 };
+  const extent = [-1, 1];
+
+  const svg = d3.select("#chart");
+  const tt = d3.select("#tt");
+  const legend = d3.select("#legend");
+
+  function resize() {
+    const rect = svg.node().getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+    svg.selectAll("*").remove();
+
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+
+    const x = d3.scaleLinear().domain(extent).range([0, innerW]);
+    const y = d3.scaleLinear().domain(extent).range([innerH, 0]);
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // grid
+    const gridTicks = d3.range(-1, 1.01, 0.25);
+    g.append("g").selectAll("line.v")
+      .data(gridTicks).join("line")
+      .attr("x1", d => x(d)).attr("x2", d => x(d))
+      .attr("y1", 0).attr("y2", innerH)
+      .attr("stroke", "rgba(255,255,255,0.08)")
+      .attr("stroke-width", 1);
+
+    g.append("g").selectAll("line.h")
+      .data(gridTicks).join("line")
+      .attr("y1", d => y(d)).attr("y2", d => y(d))
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("stroke", "rgba(255,255,255,0.08)")
+      .attr("stroke-width", 1);
+
+    // axes at 0
+    g.append("line")
+      .attr("x1", x(0)).attr("x2", x(0))
+      .attr("y1", 0).attr("y2", innerH)
+      .attr("stroke", "rgba(255,255,255,0.18)")
+      .attr("stroke-width", 1.5);
+
+    g.append("line")
+      .attr("x1", 0).attr("x2", innerW)
+      .attr("y1", y(0)).attr("y2", y(0))
+      .attr("stroke", "rgba(255,255,255,0.18)")
+      .attr("stroke-width", 1.5);
+
+    // axis labels
+    g.append("text").attr("x", 0).attr("y", -14).text("Digital ↑")
+      .attr("fill", "rgba(230,232,238,0.88)").attr("font-size", 12).attr("font-weight", 650);
+
+    g.append("text").attr("x", 0).attr("y", innerH + 34).text("Physical ↓")
+      .attr("fill", "rgba(154,163,178,0.95)").attr("font-size", 12).attr("font-weight", 650);
+
+    g.append("text").attr("x", -2).attr("y", innerH + 18).text("Interior ←")
+      .attr("fill", "rgba(230,232,238,0.88)").attr("font-size", 12).attr("font-weight", 650)
+      .attr("text-anchor", "start");
+
+    g.append("text").attr("x", innerW + 2).attr("y", innerH + 18).text("→ External")
+      .attr("fill", "rgba(230,232,238,0.88)").attr("font-size", 12).attr("font-weight", 650)
+      .attr("text-anchor", "end");
+
+    // quadrant hints
+    g.append("text").attr("x", 8).attr("y", 16).text("Inner / Digital")
+      .attr("fill", "rgba(154,163,178,0.75)").attr("font-size", 12);
+    g.append("text").attr("x", innerW - 8).attr("y", 16).text("External / Digital")
+      .attr("fill", "rgba(154,163,178,0.75)").attr("font-size", 12).attr("text-anchor","end");
+    g.append("text").attr("x", 8).attr("y", innerH - 8).text("Inner / Physical")
+      .attr("fill", "rgba(154,163,178,0.75)").attr("font-size", 12).attr("dominant-baseline","ideographic");
+    g.append("text").attr("x", innerW - 8).attr("y", innerH - 8).text("External / Physical")
+      .attr("fill", "rgba(154,163,178,0.75)").attr("font-size", 12).attr("text-anchor","end").attr("dominant-baseline","ideographic");
+
+    // points + labels layers
+    const pointsG = g.append("g").attr("class","points");
+    const labelsG = g.append("g").attr("class","labels");
+
+    // zoom/pan disabled (static view)
+
+    // tooltip helpers
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+    function trimNote(s) {
+      const t = String(s || "").trim();
+      if (!t) return "";
+      return t.length > 240 ? t.slice(0, 240) + "…" : t;
+    }
+    function showTT(event, d) {
+      const rect = svg.node().getBoundingClientRect();
+      const x0 = event.clientX - rect.left + 14;
+      const y0 = event.clientY - rect.top + 14;
+
+      tt.html(`
+        <div class="tt-title">${escapeHtml(d.title)}</div>
+        <div class="tt-meta">
+          <span>${escapeHtml(d.arc || "Other")}</span>
+          <span>•</span>
+          <span>${escapeHtml(d.domain || "")}</span>
+          ${d.month ? `<span>•</span><span>${escapeHtml(d.month)}</span>` : ""}
+        </div>
+        ${d.note ? `<div class="tt-note">${escapeHtml(trimNote(d.note))}</div>` : ""}
+        ${d.link ? `<div class="tt-meta" style="margin-top:8px;"><a href="${d.link}" target="_blank" rel="noopener">Open link</a></div>` : ""}
+      `);
+
+      tt.style("left", `${x0}px`).style("top", `${y0}px`).classed("on", true);
+    }
+    function hideTT() { tt.classed("on", false); }
+
+    const nodes = pointsG.selectAll("circle")
+      .data(data, d => d.title + "|" + (d.domain||""))
+      .join("circle")
+      .attr("cx", d => x(d.x))
+      .attr("cy", d => y(d.y))
+      .attr("r", 4.5)
+      .attr("fill", d => colors.get(d.arc) || "#94a3b8")
+      .attr("fill-opacity", 0.82)
+      .attr("stroke", "rgba(255,255,255,0.35)")
+      .attr("stroke-width", 1)
+      .style("cursor", "pointer")
+      .on("mousemove", (event, d) => showTT(event, d))
+      .on("mouseleave", hideTT)
+      .on("click", (event, d) => { if (d.link) window.open(d.link, "_blank", "noopener"); });
+
+    function updateLabels(filteredSet) {
+      labelsG.selectAll("text").remove();
+      const showLabels = document.getElementById("labels").checked;
+      if (!showLabels) return;
+
+      const labelData = filteredSet ? data.filter(d => filteredSet.has(d)) : data;
+
+      labelsG.selectAll("text")
+        .data(labelData)
+        .join("text")
+        .attr("x", d => x(d.x) + 7)
+        .attr("y", d => y(d.y) + 4)
+        .text(d => d.title)
+        .attr("fill", "rgba(230,232,238,0.78)")
+        .attr("font-size", 10.5)
+        .attr("paint-order", "stroke")
+        .attr("stroke", "rgba(11,15,23,0.85)")
+        .attr("stroke-width", 3);
+    }
+
+    function applyQuery() {
+      const q = document.getElementById("q").value.trim().toLowerCase();
+      const dim = document.getElementById("dim").checked;
+
+      if (!q) {
+        nodes.attr("fill-opacity", 0.82).attr("stroke-opacity", 1);
+        updateLabels(null);
+        return;
+      }
+
+      const matches = new Set();
+      for (const d of data) {
+        const hay = `${d.title} ${d.domain} ${d.arc} ${d.month}`.toLowerCase();
+        if (hay.includes(q)) matches.add(d);
+      }
+
+      nodes
+        .attr("fill-opacity", d => matches.has(d) ? 0.92 : (dim ? 0.10 : 0.82))
+        .attr("stroke-opacity", d => matches.has(d) ? 1.0 : (dim ? 0.25 : 1.0));
+
+      updateLabels(matches);
+    }
+
+    document.getElementById("q").addEventListener("input", applyQuery);
+    document.getElementById("labels").addEventListener("change", applyQuery);
+    document.getElementById("dim").addEventListener("change", applyQuery);
+
+    // legend
+    const arcCounts = d3.rollup(data, v => v.length, d => d.arc || "Other");
+    const rows = Array.from(arcCounts, ([arc, count]) => ({ arc, count }))
+      .sort((a,b) => d3.descending(a.count, b.count));
+
+    legend.html("");
+    for (const r of rows) {
+      const div = legend.append("div").attr("class","row");
+      div.append("div").attr("class","swatch").style("background", colors.get(r.arc) || "#94a3b8");
+      div.append("div").html(`<span style="color:rgba(230,232,238,0.92)">${r.arc}</span> <span style="color:rgba(154,163,178,0.9)">(${r.count})</span>`);
+    }
+
+    applyQuery();
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+  </script>
+</body>
+</html>

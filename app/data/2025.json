@@ -1,0 +1,324 @@
+{
+  "site": {
+    "title": "Annie's 2025 Wrapped",
+    "subtitle": "A scrapbook-y scroll through the year of miles, books, links, and letters.",
+    "ctaHint": "Scroll to open the pages",
+    "madeWith": "Next.js · Tailwind · Framer Motion · D3",
+    "footerLinks": {
+      "blog": "https://example.com",
+      "instagram": "https://instagram.com/annie",
+      "email": "mailto:hello@example.com"
+    }
+  },
+  "hero": {
+    "headline": "How Was Your 2025?",
+    "subhead": "A personal recap of what I read, wrote, ran, and sent.",
+    "name": "Annie",
+    "collage": [
+      {
+        "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1600&q=80",
+        "label": "Foggy Presidio loops",
+        "depth": 0.2
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1600&q=80",
+        "label": "Handwritten notes",
+        "depth": 0.4
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1600&q=80",
+        "label": "Reading corners",
+        "depth": 0.1
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80",
+        "label": "Friends on film",
+        "depth": 0.35
+      }
+    ],
+    "stats": [
+      { "label": "Miles", "value": 1024, "suffix": "mi" },
+      { "label": "Runs", "value": 178, "suffix": "" },
+      { "label": "Books", "value": 14, "suffix": "" },
+      { "label": "Articles saved", "value": 162, "suffix": "" },
+      { "label": "Emails sent", "value": 1842, "suffix": "" },
+      { "label": "Favorite photos", "value": 24, "suffix": "" }
+    ]
+  },
+  "recapCards": [
+    {
+      "title": "Postcard math",
+      "lines": [
+        "I visited 6 cities, read 14 books, ran 1,024 miles, and saved 162 articles."
+      ],
+      "accent": "yellow",
+      "rotation": -3
+    },
+    {
+      "title": "Little wins",
+      "lines": [
+        "Wrote 42 weekly notes.",
+        "Kept a 38-day streak of stretching.",
+        "Finally nailed a 16:02 up Twin Peaks."
+      ],
+      "accent": "blue",
+      "rotation": 2
+    },
+    {
+      "title": "Kept close",
+      "lines": [
+        "1842 emails sent",
+        "Top threads: product jams, run club, book swaps"
+      ],
+      "accent": "white",
+      "rotation": -1
+    }
+  ],
+  "running": {
+    "totals": {
+      "miles": 1024,
+      "runs": 178,
+      "avgPace": "8:48 /mi",
+      "longestRun": "16.2 mi",
+      "busiestMonth": "September"
+    },
+    "monthly": [
+      { "month": "Jan", "miles": 82, "runs": 14 },
+      { "month": "Feb", "miles": 74, "runs": 12 },
+      { "month": "Mar", "miles": 92, "runs": 16 },
+      { "month": "Apr", "miles": 88, "runs": 15 },
+      { "month": "May", "miles": 94, "runs": 17 },
+      { "month": "Jun", "miles": 80, "runs": 14 },
+      { "month": "Jul", "miles": 96, "runs": 18 },
+      { "month": "Aug", "miles": 104, "runs": 19 },
+      { "month": "Sep", "miles": 118, "runs": 20 },
+      { "month": "Oct", "miles": 110, "runs": 18 },
+      { "month": "Nov", "miles": 78, "runs": 13 },
+      { "month": "Dec", "miles": 88, "runs": 14 }
+    ],
+    "streak": [
+      { "label": "Week 1", "value": 14 },
+      { "label": "Week 2", "value": 22 },
+      { "label": "Week 3", "value": 16 },
+      { "label": "Week 4", "value": 28 },
+      { "label": "Week 5", "value": 24 },
+      { "label": "Week 6", "value": 18 },
+      { "label": "Week 7", "value": 32 },
+      { "label": "Week 8", "value": 20 }
+    ],
+    "streakDays": [
+      { "day": "Mon", "value": 8 },
+      { "day": "Tue", "value": 9 },
+      { "day": "Wed", "value": 7 },
+      { "day": "Thu", "value": 6 },
+      { "day": "Fri", "value": 5 },
+      { "day": "Sat", "value": 10 },
+      { "day": "Sun", "value": 12 }
+    ]
+  },
+  "reading": {
+    "topBooks": [
+      {
+        "title": "Light From Uncommon Stars",
+        "author": "Ryka Aoki",
+        "genre": "Fiction",
+        "rating": 4.8,
+        "note": "Found music in every chapter and finished it on a late flight.",
+        "coverUrl": "https://images.unsplash.com/photo-1491841651911-c44c30c34548?auto=format&fit=crop&w=1200&q=80",
+        "blurb": "Joyful, tender, and just weird enough to pull me out of doomscrolling."
+      },
+      {
+        "title": "How to Do Nothing",
+        "author": "Jenny Odell",
+        "genre": "Nonfiction",
+        "rating": 4.5,
+        "note": "Reminded me to map days by attention, not by output.",
+        "coverUrl": "https://images.unsplash.com/photo-1528208079128-0f310d8c0f15?auto=format&fit=crop&w=1200&q=80",
+        "blurb": "A slow read that reset how I planned weekends."
+      },
+      {
+        "title": "Running While Black",
+        "author": "Alison Mariella Desir",
+        "genre": "Memoir",
+        "rating": 4.6,
+        "note": "Kept me company on long runs and widened the circle.",
+        "coverUrl": "https://images.unsplash.com/photo-1462396881884-de2c07cb95ed?auto=format&fit=crop&w=1200&q=80",
+        "blurb": "Made every group run feel more intentional."
+      },
+      {
+        "title": "A Psalm for the Wild-Built",
+        "author": "Becky Chambers",
+        "genre": "Fiction",
+        "rating": 4.4,
+        "note": "Tea, robots, and rest—perfect couch read.",
+        "coverUrl": "https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=1200&q=80",
+        "blurb": "Soft sci-fi that insisted on gentleness."
+      }
+    ],
+    "genres": [
+      { "genre": "Fiction", "count": 5 },
+      { "genre": "Nonfiction", "count": 4 },
+      { "genre": "Memoir", "count": 3 },
+      { "genre": "Poetry", "count": 2 }
+    ],
+    "callout": "Genres that stuck: attention, cities, kindness."
+  },
+  "articles": {
+    "storyStates": [
+      {
+        "label": "Topics",
+        "bins": [
+          { "bucket": "Tech & AI", "count": 32 },
+          { "bucket": "Design", "count": 24 },
+          { "bucket": "Cities", "count": 18 },
+          { "bucket": "Running", "count": 14 },
+          { "bucket": "Culture", "count": 12 }
+        ],
+        "callout": "This year I obsessed over humane tech, street design, and running form."
+      },
+      {
+        "label": "Reading length (mins)",
+        "bins": [
+          { "bucket": "3-5", "count": 28 },
+          { "bucket": "6-9", "count": 34 },
+          { "bucket": "10-14", "count": 22 },
+          { "bucket": "15-20", "count": 12 },
+          { "bucket": "20+", "count": 6 }
+        ],
+        "callout": "Most reads landed in the 6–9 minute zone—perfect ferry rides."
+      }
+    ],
+    "notes": [
+      "Callouts: humane tech, running form, street design.",
+      "Swipe to open saved highlights later."
+    ]
+  },
+  "emails": {
+    "sentCountByMonth": [
+      { "month": "Jan", "total": 142, "correspondents": { "Justin Duan": 36, "Mahesh Murag": 28, "Nitin Subramanian": 18, "Other": 60 } },
+      { "month": "Feb", "total": 150, "correspondents": { "Justin Duan": 34, "Mahesh Murag": 26, "Nitin Subramanian": 16, "Other": 74 } },
+      { "month": "Mar", "total": 168, "correspondents": { "Justin Duan": 40, "Mahesh Murag": 30, "Nitin Subramanian": 20, "Other": 78 } },
+      { "month": "Apr", "total": 154, "correspondents": { "Justin Duan": 30, "Mahesh Murag": 28, "Nitin Subramanian": 16, "Other": 80 } },
+      { "month": "May", "total": 176, "correspondents": { "Justin Duan": 44, "Mahesh Murag": 30, "Nitin Subramanian": 18, "Other": 84 } },
+      { "month": "Jun", "total": 160, "correspondents": { "Justin Duan": 32, "Mahesh Murag": 26, "Nitin Subramanian": 18, "Other": 84 } },
+      { "month": "Jul", "total": 188, "correspondents": { "Justin Duan": 42, "Mahesh Murag": 34, "Nitin Subramanian": 22, "Other": 90 } },
+      { "month": "Aug", "total": 174, "correspondents": { "Justin Duan": 38, "Mahesh Murag": 30, "Nitin Subramanian": 20, "Other": 86 } },
+      { "month": "Sep", "total": 196, "correspondents": { "Justin Duan": 46, "Mahesh Murag": 34, "Nitin Subramanian": 24, "Other": 92 } },
+      { "month": "Oct", "total": 182, "correspondents": { "Justin Duan": 38, "Mahesh Murag": 32, "Nitin Subramanian": 22, "Other": 90 } },
+      { "month": "Nov", "total": 164, "correspondents": { "Justin Duan": 34, "Mahesh Murag": 28, "Nitin Subramanian": 18, "Other": 84 } },
+      { "month": "Dec", "total": 148, "correspondents": { "Justin Duan": 30, "Mahesh Murag": 24, "Nitin Subramanian": 16, "Other": 78 } }
+    ],
+    "weekdayHistogram": [
+      { "day": "Mon", "count": 210 },
+      { "day": "Tue", "count": 240 },
+      { "day": "Wed", "count": 224 },
+      { "day": "Thu", "count": 236 },
+      { "day": "Fri", "count": 198 },
+      { "day": "Sat", "count": 120 },
+      { "day": "Sun", "count": 114 }
+    ],
+    "timeOfDayHistogram": [
+      { "hour": 7, "count": 40 },
+      { "hour": 9, "count": 72 },
+      { "hour": 11, "count": 58 },
+      { "hour": 14, "count": 66 },
+      { "hour": 16, "count": 48 },
+      { "hour": 20, "count": 30 },
+      { "hour": 22, "count": 18 }
+    ],
+    "threads": [
+      "Product jam sessions",
+      "Weekend run clubs",
+      "Book swap chains",
+      "Family logistics",
+      "Coaching notes"
+    ],
+    "topCorrespondents": [
+      { "name": "Justin Duan", "weight": 0.35 },
+      { "name": "Mahesh Murag", "weight": 0.28 },
+      { "name": "Nitin Subramanian", "weight": 0.18 },
+      { "name": "Other", "weight": 0.19 }
+    ]
+  },
+  "calendar": {
+    "eventTypeCounts": [
+      { "type": "Work", "count": 142 },
+      { "type": "Travel", "count": 26 },
+      { "type": "Workouts", "count": 118 },
+      { "type": "Social", "count": 84 },
+      { "type": "Creative", "count": 62 }
+    ],
+    "weekdayCounts": [
+      { "day": "Mon", "morning": 4, "midday": 6, "evening": 3 },
+      { "day": "Tue", "morning": 3, "midday": 5, "evening": 4 },
+      { "day": "Wed", "morning": 4, "midday": 7, "evening": 3 },
+      { "day": "Thu", "morning": 4, "midday": 6, "evening": 4 },
+      { "day": "Fri", "morning": 3, "midday": 5, "evening": 6 },
+      { "day": "Sat", "morning": 5, "midday": 4, "evening": 5 },
+      { "day": "Sun", "morning": 6, "midday": 4, "evening": 4 }
+    ],
+    "recurringTitles": [
+      "Sync & focus",
+      "Neighborhood runs",
+      "Writing sprints",
+      "Dinner w/ crew",
+      "Coffee outside"
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Fog on Hawk Hill",
+      "note": "First sunrise ride",
+      "date": "2025-02-11"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Desk camp",
+      "note": "Ship week",
+      "date": "2025-04-02"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Book stack",
+      "note": "Nightstand tower",
+      "date": "2025-05-19"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Redwoods detour",
+      "note": "Weekend reset",
+      "date": "2025-06-28"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1526481280695-3c469c2f88b8?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Seawall laps",
+      "note": "Blue hour",
+      "date": "2025-09-05"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Coffee outside",
+      "note": "Friday ritual",
+      "date": "2025-10-10"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+      "caption": "Skybridge sunset",
+      "note": "Between meetings",
+      "date": "2025-11-03"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80",
+      "caption": "New lens test",
+      "note": "Rain on the window",
+      "date": "2025-12-12"
+    }
+  ],
+  "ending": {
+    "theme": "Make smaller, kinder things.",
+    "prompt": "If 2025 had a theme…",
+    "madeWith": "Made with time-boxed walks + cold brew",
+    "shareAttribution": "Built with Next.js + Tailwind + Framer Motion + D3"
+  }
+}

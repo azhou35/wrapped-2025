@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Gambarino";
+  src: url("/fonts/Gambarino-Regular.otf") format("opentype");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Regular.otf") format("opentype");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
+
+:root {
+  --sand-dune: #fff8ef;
+  --cerulean: #086788;
+  --blue-green: #07a0c3;
+  --primary-scarlet: #dd1c1a;
+  --red-ochre: #ba5a31;
+
+  --background: var(--sand-dune);
+  --foreground: #0f172a;
+  --accent: var(--primary-scarlet);
+  --muted: #475569;
+  --card: rgba(255, 255, 255, 0.9);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Satoshi", var(--font-inter);
+  --font-serif: var(--font-playfair);
+  --font-hand: var(--font-caveat);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Satoshi", var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.font-serif {
+  font-family: var(--font-playfair), "Times New Roman", serif;
+}
+
+.font-hand {
+  font-family: var(--font-caveat), "Comic Sans MS", cursive;
+}
+
+.font-gambarino {
+  font-family: "Gambarino", var(--font-playfair), "Times New Roman", serif;
+}
+
+.font-satoshi {
+  font-family: "Satoshi", var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: #f8fafc;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

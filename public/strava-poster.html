@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Strava 2025 – poster (months on X)</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root{
+      --bg:#f6f4ef;
+      --ink:#121316;
+      --muted:#5b6573;
+      --grid:#d9d6cf;
+      --blue:#153a7a;
+      --purple:#6c56ff;
+      --pink:#d12fa6;
+      --teal:#14a2b8;
+    }
+    body{ margin:0; background:var(--bg); color:var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 28px 24px 34px; }
+    .header{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom: 10px; }
+    h1{ margin:0; font-size: 46px; line-height: 1.02; letter-spacing:-0.6px; }
+    .sub{ margin: 8px 0 0; color: var(--muted); font-size: 16px; }
+    .kpis{ display:flex; gap: 14px; flex-wrap: wrap; justify-content:flex-end; text-align:right; }
+    .kpi{ min-width: 150px; }
+    .kpi .v{ font-weight: 700; font-size: 18px; margin-bottom: 2px; }
+    .kpi .l{ color: var(--muted); font-size: 12px; }
+    .grid{ margin-top: 16px; display:grid; grid-template-columns: 1fr 1fr; gap: 18px 18px; }
+    .panel{
+      background: rgba(255,255,255,0.35);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 14px;
+      padding: 12px 12px 8px;
+    }
+    .panel .ptitle{ font-weight: 800; font-size: 20px; margin: 0 0 4px; }
+    .panel .pnote{ color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+    .chart{ height: 250px; }
+    .chart.tall{ height: 280px; }
+    .footer{ display:flex; justify-content:space-between; align-items:center; margin-top: 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1 id="title"></h1>
+      <div class="sub" id="subtitle"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="ptitle" style="color:var(--blue)">Distance</div>
+      <div class="pnote">Monthly total (bars) and average per run (dots), kilometres</div>
+      <div id="distance" class="chart tall"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--purple)">Cumulative distance</div>
+      <div class="pnote">Cumulative distance run by month-end, kilometres</div>
+      <div id="cum" class="chart tall"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--pink)">Pace</div>
+      <div class="pnote">Average pace by month (distance‑weighted), min/mi (lower is faster)</div>
+      <div id="pace" class="chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--teal)">Volume</div>
+      <div class="pnote">Monthly kilometres + runs</div>
+      <div id="volume" class="chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--blue)">Run length mix</div>
+      <div class="pnote">Distribution of run distances (miles)</div>
+      <div id="bucket" class="chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle" style="color:var(--purple)">Where you ran</div>
+      <div class="pnote">Top locations by kilometres</div>
+      <div id="loc" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>data: your Strava export • viz: ChatGPT</div>
+    <div>Tip: print to PDF for a “poster”</div>
+  </div>
+</div>
+
+<script>
+const DATA = {"meta": {"title": "12 months of running with Strava", "subtitle": "Analysis of your runs from 2025-01-03 to 2025-12-05", "total_runs": 96, "total_km": 491.6, "total_miles": 305.5, "avg_pace": "9:49"}, "monthly": [{"month_str": "2025-01", "runs": 8, "km": 46.09, "avg_km_per_run": 5.76, "avg_pace": "9:37", "avg_pace_min": 9.624615921787711, "cum_km": 46.091497600000004}, {"month_str": "2025-02", "runs": 12, "km": 74.14, "avg_km_per_run": 6.18, "avg_pace": "9:07", "avg_pace_min": 9.119980464510528, "cum_km": 120.2337914}, {"month_str": "2025-03", "runs": 20, "km": 109.79, "avg_km_per_run": 5.49, "avg_pace": "10:14", "avg_pace_min": 10.241131632952213, "cum_km": 230.02296619999998}, {"month_str": "2025-04", "runs": 9, "km": 70.26, "avg_km_per_run": 7.81, "avg_pace": "9:51", "avg_pace_min": 9.846904107497329, "cum_km": 300.2867506}, {"month_str": "2025-05", "runs": 10, "km": 45.4, "avg_km_per_run": 4.54, "avg_pace": "9:55", "avg_pace_min": 9.91893536570956, "cum_km": 345.686232}, {"month_str": "2025-06", "runs": 10, "km": 46.2, "avg_km_per_run": 4.62, "avg_pace": "10:02", "avg_pace_min": 10.02726111691629, "cum_km": 391.8903834}, {"month_str": "2025-07", "runs": 10, "km": 34.09, "avg_km_per_run": 3.41, "avg_pace": "10:00", "avg_pace_min": 9.995750708215297, "cum_km": 425.9762046}, {"month_str": "2025-08", "runs": 7, "km": 26.76, "avg_km_per_run": 3.82, "avg_pace": "9:57", "avg_pace_min": 9.952515534175184, "cum_km": 452.7395288}, {"month_str": "2025-09", "runs": 3, "km": 8.9, "avg_km_per_run": 2.97, "avg_pace": "9:49", "avg_pace_min": 9.818565400843882, "cum_km": 461.639179}, {"month_str": "2025-10", "runs": 2, "km": 10.56, "avg_km_per_run": 5.28, "avg_pace": "9:32", "avg_pace_min": 9.529878048780487, "cum_km": 472.1964494}, {"month_str": "2025-11", "runs": 4, "km": 17.59, "avg_km_per_run": 4.4, "avg_pace": "9:30", "avg_pace_min": 9.495379688929551, "cum_km": 489.7865356}, {"month_str": "2025-12", "runs": 1, "km": 1.8, "avg_km_per_run": 1.8, "avg_pace": "9:42", "avg_pace_min": 9.7, "cum_km": 491.5889964}], "bucket": [{"bucket": "<2", "runs": 12}, {"bucket": "2\u20133", "runs": 31}, {"bucket": "3\u20134", "runs": 26}, {"bucket": "4\u20136", "runs": 21}, {"bucket": "6\u201310", "runs": 5}, {"bucket": "10+", "runs": 1}], "loc": [{"Location": "New York, NY", "km": 430.9, "runs": 82}, {"Location": "San Francisco, CA", "km": 28.7, "runs": 7}, {"Location": "Brooklyn, NY", "km": 16.7, "runs": 4}, {"Location": "Harriman State Park, NY", "km": 8.6, "runs": 1}, {"Location": "Los Angeles, CA", "km": 3.6, "runs": 1}, {"Location": "Schaumburg, IL", "km": 3.2, "runs": 1}]};
+
+// header
+document.getElementById("title").textContent = DATA.meta.title;
+document.getElementById("subtitle").textContent = DATA.meta.subtitle;
+
+const kpisEl = document.getElementById("kpis");
+function kpi(v,l){
+  const d=document.createElement("div");
+  d.className="kpi";
+  d.innerHTML = `<div class="v">${v}</div><div class="l">${l}</div>`;
+  return d;
+}
+kpisEl.appendChild(kpi(DATA.meta.total_runs, "runs"));
+kpisEl.appendChild(kpi(`${DATA.meta.total_miles} mi`, "total distance"));
+kpisEl.appendChild(kpi(`${DATA.meta.total_km} km`, "total distance"));
+kpisEl.appendChild(kpi(DATA.meta.avg_pace, "avg pace (weighted)"));
+
+// base layout
+const baseLayout = {
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor: "rgba(0,0,0,0)",
+  font: {color:"#121316"},
+  margin: {l: 46, r: 18, t: 6, b: 68},
+  xaxis: {gridcolor:"#d9d6cf", zerolinecolor:"#d9d6cf", tickangle:-90},
+  yaxis: {gridcolor:"#d9d6cf", zerolinecolor:"#d9d6cf"}
+};
+
+const months = DATA.monthly.map(d=>d.month_str);
+const km = DATA.monthly.map(d=>d.km);
+const runs = DATA.monthly.map(d=>d.runs);
+const avgKm = DATA.monthly.map(d=>d.avg_km_per_run);
+const cum = DATA.monthly.map(d=>d.cum_km);
+const pace = DATA.monthly.map(d=>d.avg_pace_min);
+
+// Distance: bars + dots
+Plotly.newPlot("distance", [
+  {type:"bar", x:months, y:km, marker:{color:"#153a7a"},
+   hovertemplate:"%{x}<br>%{y:.1f} km total<extra></extra>"},
+  {type:"scatter", mode:"markers", x:months, y:avgKm, yaxis:"y2",
+   marker:{color:"#6c56ff", size:10, opacity:0.9},
+   hovertemplate:"%{x}<br>%{y:.2f} km avg/run<extra></extra>"}
+], {
+  ...baseLayout,
+  yaxis:{...baseLayout.yaxis, title:"km (monthly)"},
+  yaxis2:{title:"km/run", overlaying:"y", side:"right", gridcolor:"rgba(0,0,0,0)", zerolinecolor:"#d9d6cf"},
+  showlegend:false
+}, {displayModeBar:false, responsive:true});
+
+// Cumulative distance
+Plotly.newPlot("cum", [{
+  type:"scatter", mode:"lines+markers",
+  x:months, y:cum,
+  line:{color:"#6c56ff", width:5},
+  marker:{size:7},
+  hovertemplate:"%{x}<br>%{y:.0f} km cumulative<extra></extra>"
+}], {
+  ...baseLayout,
+  yaxis:{...baseLayout.yaxis, title:"km"},
+  showlegend:false
+}, {displayModeBar:false, responsive:true});
+
+// Pace (lower is faster)
+Plotly.newPlot("pace", [{
+  type:"scatter", mode:"lines+markers",
+  x:months, y:pace,
+  line:{color:"#d12fa6", width:4},
+  marker:{size:7},
+  hovertemplate:"%{x}<br>%{y:.2f} min/mi<extra></extra>"
+}], {
+  ...baseLayout,
+  yaxis:{...baseLayout.yaxis, title:"min/mi", autorange:"reversed"},
+  showlegend:false
+}, {displayModeBar:false, responsive:true});
+
+// Volume: km bars + runs line
+Plotly.newPlot("volume", [
+  {type:"bar", x:months, y:km, marker:{color:"#14a2b8"},
+   hovertemplate:"%{x}<br>%{y:.1f} km<extra></extra>"},
+  {type:"scatter", mode:"lines+markers", x:months, y:runs, yaxis:"y2",
+   line:{color:"#121316", width:2}, marker:{size:6},
+   hovertemplate:"%{x}<br>%{y} runs<extra></extra>"}
+], {
+  ...baseLayout,
+  yaxis:{...baseLayout.yaxis, title:"km"},
+  yaxis2:{title:"runs", overlaying:"y", side:"right", gridcolor:"rgba(0,0,0,0)", zerolinecolor:"#d9d6cf"},
+  showlegend:false
+}, {displayModeBar:false, responsive:true});
+
+// Distance buckets donut
+Plotly.newPlot("bucket", [{
+  type:"pie",
+  labels: DATA.bucket.map(d=>d.bucket),
+  values: DATA.bucket.map(d=>d.runs),
+  hole: 0.52,
+  textinfo:"label+percent",
+  marker:{colors:["#153a7a","#2b4f9a","#6c56ff","#d12fa6","#14a2b8","#111827"]},
+  hovertemplate:"%{label}<br>%{value} runs<extra></extra>"
+}], {
+  ...baseLayout,
+  margin:{l:10,r:10,t:10,b:10},
+  legend:{orientation:"h", y:-0.1}
+}, {displayModeBar:false, responsive:true});
+
+// Locations horizontal
+const loc = DATA.loc.slice().reverse();
+Plotly.newPlot("loc", [{
+  type:"bar", orientation:"h",
+  x: loc.map(d=>d.km),
+  y: loc.map(d=>d.Location),
+  marker:{color:"#6c56ff"},
+  hovertemplate:"%{y}<br>%{x:.1f} km<extra></extra>"
+}], {
+  ...baseLayout,
+  margin:{l:110,r:18,t:6,b:40},
+  xaxis:{gridcolor:"#d9d6cf", zerolinecolor:"#d9d6cf"},
+  yaxis:{gridcolor:"#d9d6cf", zerolinecolor:"#d9d6cf"}
+}, {displayModeBar:false, responsive:true});
+</script>
+</body>
+</html>
