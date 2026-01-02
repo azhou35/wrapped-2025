@@ -17,6 +17,8 @@ type SectionProps = {
   children: React.ReactNode;
   background?: string;
   bleed?: boolean;
+  noShadow?: boolean;
+  noBorder?: boolean;
 };
 
 const accentScarlet = "#dd1c1a";
