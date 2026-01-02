@@ -41,7 +41,7 @@ export function MonthlyBarChart({
 }) {
   const width = data.length * 34 + 60;
   const x = useMemo(
-    () => scaleBand<string>().domain(data.map((d) => d.month)).range([40, width - 12]).padding(0.22),
+    () => scaleBand().domain(data.map((d) => d.month)).range([40, width - 12]).padding(0.22),
     [data, width],
   );
   const maxVal = useMemo(() => max(data, (d) => (mode === "miles" ? d.miles : d.runs)) ?? 1, [data, mode]);
