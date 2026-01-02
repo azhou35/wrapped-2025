@@ -136,7 +136,8 @@ const hostedEvents: HostedEvent[] = [
     id: "Cooking",
     title: "Slow meals together",
     type: "fun",
-    description: "Comfort is a warm bowl of hot soup, brushing elbows with friends around a folding dining table. Permission to linger at the table long after the wine is drunk, a place to unwind in the presence of others. Food as a love language is over-wrought, but the meals I cooked with friends meant the world to me: preparing my mom's dumpling recipe for CNY, steaming our faces over hot pot, crafting matchas with powder Vinny brought from Japan.",
+    description:
+      "Comfort is a warm bowl of hot soup, brushing elbows with friends around a folding dining table. Permission to linger at the table long after the wine is drunk, a place to unwind in the presence of others. Food as a love language is over-wrought, but the meals I cooked with friends meant the world to me: preparing my mom's dumpling recipe for CNY, steaming our faces over hot pot, crafting matchas with powder Vinny brought from Japan.\n\nCompanion comes from *compaignon*—the one who breaks bread with you—and I found a cornerstone of friendship is the act of nourishing each other.",
     image: "/img/food1.png",
   },
 ];
