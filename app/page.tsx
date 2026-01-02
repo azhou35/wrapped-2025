@@ -62,11 +62,7 @@ type HostedEvent = {
   image: string;
 };
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const withBase = (path: string) => {
-  if (!path) return path;
-  return path.startsWith("/") ? `${basePath}${path}` : path;
-};
+const withBase = (path: string) => path;
 
 // Collage items — update paths/positions/descriptions as you swap assets in /public/img
 const bagItems: BagItem[] = [
@@ -329,7 +325,6 @@ function WhatsInMyBag({ prefersReducedMotion }: { prefersReducedMotion: boolean 
 
 export default function Home() {
   const prefersReducedMotion = !!useReducedMotion();
-  const [isLoaded, setIsLoaded] = useState(false);
   const [d3Ready, setD3Ready] = useState(false);
   const plotly = usePlotly();
   const distanceFullRef = useRef<HTMLDivElement | null>(null);
@@ -338,15 +333,6 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [seenSteps, setSeenSteps] = useState<Record<number, boolean>>({ 0: true });
   const [activeHostedType, setActiveHostedType] = useState<HostedEvent["type"]>("writing");
-
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      setIsLoaded(true);
-      return;
-    }
-    const t = setTimeout(() => setIsLoaded(true), 900);
-    return () => clearTimeout(t);
-  }, [prefersReducedMotion]);
 
   // Preload hosted event images for faster swaps
   useEffect(() => {
@@ -689,26 +675,6 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-[var(--sand-dune)] text-slate-900">
-      {!isLoaded && (
-        <motion.div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--sand-dune)]"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.4 }}
-          onAnimationComplete={() => setIsLoaded(true)}
-        >
-          <motion.div
-            className="relative h-40 w-32 rounded-xl border-2 border-slate-900 bg-white shadow-[12px_12px_0px_#dd1c1a]"
-            initial={{ rotate: -6, y: 12 }}
-            animate={{ rotate: 0, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="absolute inset-3 rounded-lg bg-[repeating-linear-gradient(-45deg,rgba(0,0,0,0.06),rgba(0,0,0,0.06)_6px,transparent_6px,transparent_12px)]" />
-            <p className="absolute bottom-4 left-4 text-sm font-semibold text-slate-800">Opening scrapbook…</p>
-          </motion.div>
-        </motion.div>
-      )}
-
       <main className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-16 pt-10 sm:px-6 lg:px-10 snap-y snap-mandatory">
         <section
           className="relative min-h-screen snap-start overflow-hidden rounded-[36px] border border-slate-200/70 bg-[var(--sand-dune)] px-6 py-10 shadow-none"
