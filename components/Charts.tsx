@@ -231,8 +231,8 @@ export function StackedBarChart({
   reducedMotion?: boolean;
 }) {
   const width = data.length * 42 + 60;
-  const stackedInput = data.map((d) => ({ ...d.correspondents, month: d.month }));
-  const stackGen = stack().keys(keys);
+  const stackedInput = useMemo(() => data.map((d) => d.correspondents), [data]);
+  const stackGen = useMemo(() => stack<Record<string, number>>().keys(keys), [keys]);
   const series = useMemo(() => stackGen(stackedInput), [stackGen, stackedInput]);
   const maxVal = max(stackedInput, (d) => Object.values(d).reduce((sum, val) => (typeof val === "number" ? sum + val : sum), 0)) ?? 1;
   const y = scaleLinear([0, maxVal], [height - 28, 12]);
